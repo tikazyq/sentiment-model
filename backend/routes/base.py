@@ -1,5 +1,6 @@
 from flask_restful import reqparse, Resource
 # from flask_restplus import reqparse, Resource
+from pymongo import DESCENDING
 
 from db import db_manager
 from utils import jsonify
@@ -79,7 +80,9 @@ class BaseApi(Resource):
             items = db_manager.list(col_name=self.col_name,
                                     cond=cond,
                                     skip=(page - 1) * page_size,
-                                    limit=page_size)
+                                    limit=page_size,
+                                    sort_key='_id',
+                                    sort_direction=DESCENDING)
 
             return {
                 'status': 'ok',
@@ -91,7 +94,6 @@ class BaseApi(Resource):
 
         # get item by id
         else:
-            print(db_manager.get(col_name=self.col_name, id=id))
             return jsonify(db_manager.get(col_name=self.col_name, id=id))
 
     def put(self) -> (dict, tuple):
