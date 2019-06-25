@@ -5,3 +5,5 @@ jieba
 flask
 flask-restful
 flask-cors
+requests
+apscheduler
