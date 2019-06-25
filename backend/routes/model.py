@@ -50,7 +50,7 @@ class ModelApi(BaseApi):
     ]
 
     # 分类器名称
-    clf_name = 'mlp'
+    clf_name = config.MODEL_NAME
 
     def post(self, action: str = None):
         if not hasattr(self, action):
@@ -103,7 +103,9 @@ class ModelApi(BaseApi):
         model_id = db_manager.save(self.col_name, {
             '_id': self.clf_name,
             'acc_train': acc_train,
+            'size_train': len(y_train),
             'acc_test': acc_test,
+            'size_test': len(y_test),
             'ts': datetime.now()
         })
 

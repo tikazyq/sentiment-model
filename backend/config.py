@@ -12,3 +12,4 @@ MONGO_AUTH_DB = 'crawlab_test'
 
 # model
 MODEL_DIR = './models'
+MODEL_NAME = 'mlp'

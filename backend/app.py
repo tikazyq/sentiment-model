@@ -13,6 +13,7 @@ root_path = os.path.abspath(os.path.join(file_dir, '.'))
 sys.path.append(root_path)
 
 import config
+import scheduler
 
 # flask app instance
 app = Flask(__name__)
