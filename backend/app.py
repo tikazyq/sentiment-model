@@ -5,6 +5,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
 
+from routes.model import ModelApi
 from routes.news import NewsApi
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -27,6 +28,11 @@ api.add_resource(
     NewsApi,
     '/news',
     '/news/<int:id>'
+)
+api.add_resource(
+    ModelApi,
+    '/model',
+    '/model/<string:action>'
 )
 
 if __name__ == '__main__':

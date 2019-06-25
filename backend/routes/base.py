@@ -51,7 +51,7 @@ class BaseApi(Resource):
                            'code': 400,
                            'error': 'action "%s" invalid' % action
                        }, 400
-            return getattr(self, action)(id)
+            return getattr(self, action)()
 
         # list items
         elif id is None:
