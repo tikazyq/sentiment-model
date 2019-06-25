@@ -1,0 +1,7 @@
+pandas
+pymongo
+sklearn
+jieba
+flask
+flask-restful
+flask-cors
