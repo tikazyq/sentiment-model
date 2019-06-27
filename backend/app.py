@@ -4,9 +4,11 @@ import sys
 from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
+import tushare as ts
 
 from routes.model import ModelApi
 from routes.news import NewsApi
+from routes.stock import StockApi
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 root_path = os.path.abspath(os.path.join(file_dir, '.'))
@@ -25,6 +27,9 @@ api = Api(app)
 # cors support
 CORS(app, supports_credentials=True)
 
+# set tushare token
+ts.set_token(config.TUSHARE_TOKEN)
+
 api.add_resource(
     NewsApi,
     '/news',
@@ -34,6 +39,11 @@ api.add_resource(
     ModelApi,
     '/model',
     '/model/<string:action>'
+)
+api.add_resource(
+    StockApi,
+    '/stock',
+    '/stock/<string:action>'
 )
 
 if __name__ == '__main__':

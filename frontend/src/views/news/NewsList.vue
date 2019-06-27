@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-row>
       <el-table
-        :data="filteredTableData"
+        :data="tableData"
         stripe
       >
         <el-table-column
@@ -12,13 +12,28 @@
         />
         <el-table-column
           prop="text"
-          label="Text"
+          label="新闻"
           width="auto"
         />
         <el-table-column
-          label="Action"
+          label="预测"
+          width="100"
+          align="center"
+        >
+          <template slot-scope="scope">
+            <el-button
+              plain
+              size="mini"
+              :type="getClassType(scope.row.class_pred)"
+              :icon="getClassIcon(scope.row.class_pred)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="实际"
           width="200"
           fixed="right"
+          align="center"
         >
           <template slot-scope="scope">
             <el-button
@@ -48,7 +63,8 @@
       <el-pagination
         :current-page.sync="pageNum"
         :page-size.sync="pageSize"
-        :total="tableData.length"
+        :total="tableDataTotal"
+        @current-change="getList"
       />
     </el-row>
   </div>
@@ -69,17 +85,16 @@ export default {
       pageSize: 10
     }
   },
-  computed: {
-    filteredTableData() {
-      return this.tableData.filter((d, i) => {
-        return this.pageSize * (this.pageNum - 1) <= i && i < this.pageSize * this.pageNum
-      })
-    }
-  },
+  computed: {},
   methods: {
     getList() {
-      getList().then(data => {
+      const params = {
+        page_size: this.pageSize,
+        page_num: this.pageNum
+      }
+      getList(params).then(data => {
         this.tableData = data.items
+        this.tableDataTotal = data.total_count
       })
     },
     _select(row) {
@@ -101,6 +116,24 @@ export default {
     selectDown(row) {
       this.$set(row, 'class', -1)
       this._select(row)
+    },
+    getClassType(cls) {
+      if (cls === -1) {
+        return 'success'
+      } else if (cls === 0) {
+        return 'info'
+      } else if (cls === 1) {
+        return 'danger'
+      }
+    },
+    getClassIcon(cls) {
+      if (cls === -1) {
+        return 'el-icon-bottom'
+      } else if (cls === 0) {
+        return 'el-icon-minus'
+      } else if (cls === 1) {
+        return 'el-icon-top'
+      }
     }
   },
   created() {
