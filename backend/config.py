@@ -13,3 +13,10 @@ MONGO_AUTH_DB = 'crawlab_test'
 # model
 MODEL_DIR = './models'
 MODEL_NAME = 'mlp'
+# MODEL_NAME = 'lg'
+# MODEL_NAME = 'nb'
+# MODEL_NAME = 'rf'
+# MODEL_NAME = 'rf'
+
+# tushare
+TUSHARE_TOKEN = '7d5ebd987646a8c213ce18307440ce6a9a5efcabd210fb2a975f5099'
