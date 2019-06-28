@@ -24,7 +24,7 @@ def predict_news():
     filename_vec = os.path.join(config.MODEL_DIR, f'vec.pkl')
     vec = joblib.load(filename_vec)
 
-    for d in db_manager.list('results_xueqiu', {'class_pred': {'$exists': False}}, limit=999999):
+    for d in db_manager.list('results_xueqiu', {}, limit=999999):
         print(f'predicting {d["_id"]}')
         text = d.get('text')
         x = vec.transform([text])

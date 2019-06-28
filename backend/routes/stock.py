@@ -1,4 +1,5 @@
 import tushare as ts
+from flask import request
 
 import config
 from routes.base import BaseApi
@@ -9,7 +10,7 @@ class StockApi(BaseApi):
 
     def get(self, action: str = None):
         if hasattr(self.pro, action):
-            df = getattr(self.pro, action)()
+            df = getattr(self.pro, action)(**request.args)
             return {
                 'status': 'ok',
                 'items': [df.iloc[i].to_dict() for i in df.index.tolist()]
