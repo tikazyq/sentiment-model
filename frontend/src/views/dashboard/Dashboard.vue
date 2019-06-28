@@ -6,21 +6,19 @@
       </div>
     </el-row>
     <el-row>
-      <div class="">
-        <el-select
-          v-model="stockCode"
-          filterable
-        >
-          <el-option
-            v-for="op in stockList"
-            :key="op.ts_code"
-            :label="`${op.name} (${op.ts_code})`"
-            :value="op.ts_code"
-          />
-        </el-select>
-      </div>
       <div class="k-chart">
-        Daily K-Chart
+        <div class="">
+          <el-select v-model="type">
+            <el-option value="index" label="指数"/>
+            <el-option value="stock" label="股票"/>
+          </el-select>
+          <el-autocomplete
+            v-model="code"
+            :fetch-suggestions="fetchCodeSuggestions"
+          />
+          <el-button type="primary" @click="getDaily">查询</el-button>
+        </div>
+        <div id="k-chart"/>
       </div>
     </el-row>
     <el-row>
@@ -40,43 +38,177 @@
 
 <script>
 import dayjs from 'dayjs'
+import echarts from 'echarts'
 import {
   getStockList,
   getStockDaily,
+  getIndexList,
+  getIndexDaily
 } from '../../api/dashboard'
+
+const upColor = '#ec0000'
+const downColor = '#00da3c'
 
 export default {
   name: 'Dashboard',
   data() {
     return {
-      stockCode: '',
+      chart: undefined,
+      type: 'index',
+      code: '000001.SH',
       stockList: [],
+      indexList: [
+        { ts_code: '000001.SH', name: '上证指数' }
+      ],
       dailyList: []
     }
   },
+  watch: {
+    type() {
+      this.code = ''
+    },
+    code() {
+    }
+  },
   methods: {
+    renderDaily() {
+      this.chart = echarts.init(this.$el.querySelector('#k-chart'))
+      const xData = this.dailyList.map(d => d.trade_date)
+      const data = this.dailyList
+        .map(d => [
+          d.open,
+          d.close,
+          d.high,
+          d.low
+        ])
+      const dataVol = this.dailyList.map(d => {
+        const r = {
+          value: d.vol,
+          itemStyle: {
+            color: undefined
+          }
+        }
+        if (d.open >= d.close) {
+          r.itemStyle.color = downColor
+        } else {
+          r.itemStyle.color = upColor
+        }
+        return r
+        // return d.vol
+      })
+      const option = {
+        tooltip: {
+          trigger: 'axis'
+        },
+        yAxis: [
+          {
+            type: 'value',
+            scale: true,
+            splitArea: {
+              show: true
+            }
+          },
+          {
+            scale: true,
+            gridIndex: 1,
+            axisLabel: { show: false },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            splitLine: { show: false }
+          }
+        ],
+        xAxis: [
+          {
+            data: xData
+          },
+          {
+            gridIndex: 1,
+            data: xData,
+            axisLabel: { show: false },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            splitLine: { show: false }
+          }
+        ],
+
+        grid: [
+          {
+            left: '10%',
+            right: '8%',
+            height: '50%'
+          },
+          {
+            left: '10%',
+            right: '8%',
+            top: '73%',
+            height: '16%'
+          }
+        ],
+        series: [
+          {
+            type: 'k',
+            data,
+            gridIndex: 0,
+            itemStyle: {
+              normal: {
+                color: downColor,
+                color0: upColor,
+                borderColor: null,
+                borderColor0: null
+              }
+            }
+          },
+          {
+            type: 'bar',
+            gridIndex: 1,
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data: dataVol
+          }
+        ]
+      }
+      this.chart.setOption(option)
+    },
+    getIndexList() {
+      const params = {}
+      getIndexList(params).then(data => {
+        this.stockList = data.items
+      })
+    },
     getStockList() {
       const params = {}
-      params.exchange = 'SSE'
-      // params.ts_code = this.stockCode
-      // params.start_date = dayjs().subtract(30, 'd').format('YYYYMMDD')
-      // params.end_date = dayjs().subtract(0, 'd').format('YYYYMMDD')
       getStockList(params).then(data => {
         this.stockList = data.items
       })
     },
-    getStockDaily() {
+    getDaily() {
       const params = {}
-      params.ts_code = this.stockCode
-      params.start_date = dayjs().subtract(30, 'd').format('YYYYMMDD')
-      params.end_date = dayjs().subtract(0, 'd').format('YYYYMMDD')
-      getStockDaily(params).then(data => {
-        this.stockList = data.items
+      params.ts_code = this.code
+      params.start_date = dayjs().subtract(90, 'd').format('YYYYMMDD')
+      const func = this.type === 'index' ? getIndexDaily : getStockDaily
+      func(params).then(data => {
+        this.dailyList = data.items.sort((a, b) => a.trade_date > b.trade_date)
+        this.renderDaily()
       })
+    },
+    fetchCodeSuggestions(queryString, cb) {
+      const data = this.type === 'index' ? this.indexList : this.stockList
+      cb(
+        data
+          .filter(d => {
+            if (d.name.includes(queryString)) return true
+            if (d.ts_code.includes(queryString)) return true
+          })
+          .map(d => {
+            d.value = d.ts_code
+            return d
+          })
+      )
     }
   },
   created() {
-    // this.getStockList()
+    this.getStockList()
+    this.getDaily()
   }
 }
 </script>
@@ -87,10 +219,14 @@ export default {
     height: 150px;
   }
 
+  #k-chart {
+    height: 400px;
+    width: 100%;
+  }
+
   .k-chart {
     margin-top: 20px;
     border: 1px solid grey;
-    height: 400px;
   }
 
   .news-list {
