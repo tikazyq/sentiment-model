@@ -10,7 +10,7 @@ class StockApi(BaseApi):
 
     def get(self, action: str = None):
         if hasattr(self.pro, action):
-            df = getattr(self.pro, action)(**request.args)
+            df = getattr(self.pro, action)(**{k: request.args[k] for k in request.args})
             return {
                 'status': 'ok',
                 'items': [df.iloc[i].to_dict() for i in df.index.tolist()]
