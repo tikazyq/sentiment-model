@@ -7,17 +7,32 @@
     </el-row>
     <el-row>
       <div class="k-chart">
-        <div class="">
-          <el-select v-model="type">
-            <el-option value="index" label="指数"/>
-            <el-option value="stock" label="股票"/>
-          </el-select>
-          <el-autocomplete
-            v-model="code"
-            :fetch-suggestions="fetchCodeSuggestions"
-          />
-          <el-button type="primary" @click="getDaily">查询</el-button>
-        </div>
+        <el-row>
+          <div class="control">
+            <div class="left">
+              <el-select
+                v-model="type"
+                size="small"
+              >
+                <el-option value="index" label="指数"/>
+                <el-option value="stock" label="股票"/>
+              </el-select>
+              <el-autocomplete
+                v-model="code"
+                size="small"
+                :fetch-suggestions="fetchCodeSuggestions"
+              />
+              <el-button size="small" type="primary" @click="getDaily">查询</el-button>
+            </div>
+            <div class="right">
+              <el-date-picker
+                type="daterange"
+                v-model="dateRange"
+                size="small"
+              />
+            </div>
+          </div>
+        </el-row>
         <div id="k-chart"/>
       </div>
     </el-row>
@@ -60,7 +75,11 @@ export default {
       indexList: [
         { ts_code: '000001.SH', name: '上证指数' }
       ],
-      dailyList: []
+      dailyList: [],
+      dateRange: [
+        dayjs().subtract(3, 'month'),
+        dayjs().subtract(0, 'd')
+      ]
     }
   },
   watch: {
@@ -151,8 +170,8 @@ export default {
             gridIndex: 0,
             itemStyle: {
               normal: {
-                color: downColor,
-                color0: upColor,
+                color: upColor,
+                color0: downColor,
                 borderColor: null,
                 borderColor0: null
               }
@@ -184,10 +203,12 @@ export default {
     getDaily() {
       const params = {}
       params.ts_code = this.code
-      params.start_date = dayjs().subtract(90, 'd').format('YYYYMMDD')
+      params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
+      params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
       const func = this.type === 'index' ? getIndexDaily : getStockDaily
       func(params).then(data => {
-        this.dailyList = data.items.sort((a, b) => a.trade_date > b.trade_date)
+        this.dailyList = data.items
+        this.dailyList.sort((a, b) => a.trade_date < b.trade_date ? -1 : 1)
         this.renderDaily()
       })
     },
@@ -233,5 +254,10 @@ export default {
     margin-top: 20px;
     border: 1px solid grey;
     height: 400px;
+  }
+
+  .control {
+    display: flex;
+    justify-content: space-between;
   }
 </style>

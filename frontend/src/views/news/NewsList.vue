@@ -16,6 +16,16 @@
           width="auto"
         />
         <el-table-column
+          label="股票"
+          width="200"
+        >
+          <template slot-scope="scope">
+            <el-tag v-for="s in scope.row.stocks" :key="s">
+              {{s}}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
           label="预测"
           width="100"
           align="center"
