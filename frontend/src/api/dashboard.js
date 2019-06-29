@@ -36,3 +36,12 @@ export function getIndexList(params) {
   })
 }
 
+export function getNewsStats(params) {
+  if (!params) params = {}
+  return request({
+    url: '/stats/get_news_stats',
+    method: 'get',
+    params
+  })
+}
+

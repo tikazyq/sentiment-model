@@ -2,7 +2,21 @@
   <div class="app-container">
     <el-row>
       <div class="metric-list">
-        Metric List
+        <el-col :span="3">
+          <div class="">
+            000001.SH
+          </div>
+        </el-col>
+        <el-col :span="3">
+          <div class="">正面新闻</div>
+          <div class="">{{newsStats['1']}}</div>
+        </el-col>
+        <el-col :span="3">
+          <div class="">负面新闻</div>
+          <div class="">{{newsStats['-1']}}</div>
+        </el-col>
+        <el-col :span="3">
+        </el-col>
       </div>
     </el-row>
     <el-row>
@@ -58,7 +72,8 @@ import {
   getStockList,
   getStockDaily,
   getIndexList,
-  getIndexDaily
+  getIndexDaily,
+  getNewsStats
 } from '../../api/dashboard'
 
 const upColor = '#ec0000'
@@ -76,6 +91,7 @@ export default {
         { ts_code: '000001.SH', name: '上证指数' }
       ],
       dailyList: [],
+      newsStats: {},
       dateRange: [
         dayjs().subtract(3, 'month'),
         dayjs().subtract(0, 'd')
@@ -225,11 +241,23 @@ export default {
             return d
           })
       )
+    },
+    getNewsStats() {
+      const params = {}
+      params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
+      params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
+      getNewsStats(params).then(data => {
+        this.newsStats = data.data
+      })
+    },
+    getData() {
+      this.getDaily()
+      this.getNewsStats()
     }
   },
   created() {
     this.getStockList()
-    this.getDaily()
+    this.getData()
   }
 }
 </script>

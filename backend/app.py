@@ -8,6 +8,7 @@ import tushare as ts
 
 from routes.model import ModelApi
 from routes.news import NewsApi
+from routes.stats import StatsApi
 from routes.stock import StockApi
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -44,6 +45,10 @@ api.add_resource(
     StockApi,
     '/stock',
     '/stock/<string:action>'
+)
+api.add_resource(
+    StatsApi,
+    '/stats/<string:action>'
 )
 
 if __name__ == '__main__':
