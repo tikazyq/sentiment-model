@@ -25,6 +25,7 @@ pipeline {
                 echo 'Building Frontend...'
                 sh """
                 cd /home/yeqing/jenkins_home/workspace/Sentiment-Model_master/frontend
+                /home/yeqing/.nvm/versions/node/v8.12.0/bin/node /home/yeqing/.nvm/versions/node/v8.12.0/bin/npm install --registry=https://registry.npm.taobao.org
                 /home/yeqing/.nvm/versions/node/v8.12.0/bin/node /home/yeqing/.nvm/versions/node/v8.12.0/bin/npm run build:prod
                 """
             }
