@@ -20,10 +20,20 @@ pipeline {
                 }
             }
         }
-        stage('Build') {
+        stage('Build Frontend') {
             steps {
-                echo "Building..."
+                echo 'Building Frontend...'
                 sh """
+                cd /home/yeqing/jenkins_home/workspace/sentiment-model_master/frontend
+                /home/yeqing/.nvm/versions/node/v8.12.0/bin/npm run build:prod
+                """
+            }
+        }
+        stage('Build Backend') {
+            steps {
+                echo "Building Backend..."
+                sh """
+                cd /home/yeqing/jenkins_home/workspace/sentiment-model_master
                 docker build -t tikazyq/sentiment-model:latest .
                 """
             }
@@ -33,16 +43,21 @@ pipeline {
                 echo 'Testing..'
             }
         }
-        stage('Deploy') {
+        stage('Deploy Frontend') {
             steps {
-                echo 'Deploying....'
+                echo 'Deploying Frontend...'
                 sh """
-                /home/yeqing/.nvm/versions/node/v8.12.0/bin/npm run build:prod
                 docker rm -f sm-frontend | true
                 docker run -d --name=sm-frontend -p 8090:80 \
                     -v /home/yeqing/jenkins_home/workspace/sentiment-model_master/frontend/dist:/usr/share/nginx/html \
                     nginx:latest
-
+                """
+            }
+        }
+        stage('Deploy Backend') {
+            steps {
+                echo 'Deploying Backend...'
+                sh """
                 docker rm -f sm-backend | true
                 docker run -d --restart always --name sm-backend \
                     -p 5000:5000 \
