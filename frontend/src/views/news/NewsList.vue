@@ -16,11 +16,11 @@
           width="auto"
         />
         <el-table-column
-          label="股票"
+          label="涉及股票"
           width="200"
         >
           <template slot-scope="scope">
-            <el-tag v-for="s in scope.row.stocks" :key="s">
+            <el-tag size="mini" v-for="s in scope.row.stocks" :key="s" @click="clickStock(s)">
               {{s}}
             </el-tag>
           </template>
@@ -144,6 +144,15 @@ export default {
       } else if (cls === 1) {
         return 'el-icon-top'
       }
+    },
+    clickStock(s) {
+      this.$router.push({
+        path: '/dashboard',
+        query: {
+          type: 'stock',
+          code: s
+        }
+      })
     }
   },
   created() {
@@ -153,4 +162,12 @@ export default {
 </script>
 
 <style scoped>
+  .el-tag {
+    margin: 5px;
+    cursor: pointer;
+  }
+
+  .el-tag:hover {
+    text-decoration: underline;
+  }
 </style>

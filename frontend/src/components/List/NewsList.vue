@@ -1,0 +1,68 @@
+<template>
+  <ul class="news-list">
+    <li
+      v-for="n in newsList"
+      :key="n._id"
+      class="news-item"
+    >
+      <div class="time">
+        {{dayjs(n.created_at).format('YYYY-MM-DD HH:mm:ss')}}
+      </div>
+      <div class="text">
+        {{n.text}}
+      </div>
+    </li>
+  </ul>
+</template>
+
+<script>
+import dayjs from 'dayjs'
+
+export default {
+  name: 'NewsList',
+  props: {
+    newsList: {
+      type: Array,
+      default() {
+        return []
+      }
+    }
+  },
+  methods: {
+    dayjs(value) {
+      return dayjs(value)
+    }
+  }
+}
+</script>
+
+<style scoped>
+  .news-list {
+    padding: 0;
+    list-style: none;
+  }
+
+  .news-item {
+    margin: 10px 0;
+    display: flex;
+  }
+
+  .news-item:hover {
+    background: rgb(245, 245, 245);
+    cursor: pointer;
+  }
+
+  .news-item .text {
+    font-size: 12px;
+    color: #555;
+    flex-basis: calc(100% - 60px);
+    padding-left: 10px;
+  }
+
+  .news-item .time {
+    font-size: 11px;
+    color: #999;
+    text-align: right;
+    flex-basis: 60px;
+  }
+</style>

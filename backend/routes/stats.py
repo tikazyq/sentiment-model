@@ -9,6 +9,7 @@ class StatsApi(BaseApi):
     arguments = [
         ('start_date', str),
         ('end_date', str),
+        ('ts_code', str),
     ]
 
     def get(self, action: str = None):
@@ -18,14 +19,18 @@ class StatsApi(BaseApi):
         args = self.parser.parse_args()
         start_date = args.get('start_date')
         end_date = args.get('end_date')
+        ts_code = args.get('ts_code')
         start_ts = datetime.strptime(start_date, '%Y%m%d').timestamp() * 1e3
         end_ts = datetime.strptime(end_date, '%Y%m%d').timestamp() * 1e3
-        items = db_manager.list('results_xueqiu', {
+        query = {
             'created_at': {
                 '$gte': start_ts,
                 '$lt': end_ts
             }
-        }, limit=999999)
+        }
+        if ts_code is not None:
+            query['stocks'] = ts_code
+        items = db_manager.list('results_xueqiu', query, limit=999999)
         data = defaultdict(int)
         daily = {
             -1: defaultdict(int),

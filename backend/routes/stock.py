@@ -16,3 +16,11 @@ class StockApi(BaseApi):
                 'items': [df.iloc[i].to_dict() for i in df.index.tolist()]
             }
         return getattr(self, action)()
+
+
+class StockSimpleApi(BaseApi):
+    col_name = 'stocks'
+
+
+class StockIndexSimpleApi(BaseApi):
+    col_name = 'stock_indexes'

@@ -1,3 +1,5 @@
+import json
+
 from flask_restful import reqparse, Resource
 # from flask_restplus import reqparse, Resource
 from pymongo import DESCENDING
@@ -58,8 +60,8 @@ class BaseApi(Resource):
             # filter
             cond = {}
             if args.get('filter') is not None:
-                cond = args.filter
-                # cond = json.loads(args.filter)
+                # cond = args.filter
+                cond = json.loads(args.filter)
 
             # page number
             page = 1
