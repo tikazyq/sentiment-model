@@ -40,7 +40,7 @@ pipeline {
                 npm run build:prod
                 docker rm -f sm-frontend | true
                 docker run -d --name=sm-frontend -p 8090:80 \
-                    -v /home/yeqing/jenkins_home/workspace/sentiment-model_develop/frontend/dist:/usr/share/nginx/html \
+                    -v /home/yeqing/jenkins_home/workspace/sentiment-model_master/frontend/dist:/usr/share/nginx/html \
                     nginx:latest
 
                 docker rm -f sm-backend | true
