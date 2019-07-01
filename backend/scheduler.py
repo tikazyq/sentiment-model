@@ -14,7 +14,7 @@ scheduler = BackgroundScheduler()
 @scheduler.scheduled_job('interval', minutes=5)
 def train_model():
     print('training model...')
-    r = requests.get(f'http://{config.FLASK_HOST}:{config.FLASK_PORT}/model/train')
+    r = requests.get(f'http://localhost:{config.FLASK_PORT}/model/train')
     print(f'response: {r.content.decode("utf-8")}')
 
 
@@ -43,7 +43,7 @@ def predict_news():
 @scheduler.scheduled_job('interval', hours=1)
 def update_stock_list():
     print('updating stock list...')
-    r = requests.get(f'http://{config.FLASK_HOST}:{config.FLASK_PORT}/stock/stock_basic')
+    r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock/stock_basic')
     data = json.loads(r.content)
     for item in data['items']:
         item['_id'] = item['ts_code']
@@ -63,7 +63,7 @@ def update_stock_index_list():
         'OTH',
     ]
     for market in market_list:
-        r = requests.get(f'http://{config.FLASK_HOST}:{config.FLASK_PORT}/stock/index_basic?market=' + market)
+        r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock/index_basic?market=' + market)
         data = json.loads(r.content)
         for item in data['items']:
             item['_id'] = item['ts_code']

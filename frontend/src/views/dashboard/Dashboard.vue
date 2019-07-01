@@ -48,7 +48,7 @@
                 <el-option value="stock" label="股票"/>
               </el-select>
               <el-autocomplete
-                :value="code"
+                v-model="code"
                 size="small"
                 :fetch-suggestions="fetchCodeSuggestions"
                 @select="onSelectCode"
@@ -105,8 +105,8 @@ export default {
   data() {
     return {
       chart: undefined,
-      type: 'index',
-      code: '000001.SH',
+      type: 'stock',
+      code: '000001.SZ',
       stockList: [],
       stockIndexList: [],
       dailyList: [],
@@ -155,6 +155,9 @@ export default {
       this.code = ''
     },
     code() {
+    },
+    dateRange() {
+      this.getData()
     }
   },
   methods: {
