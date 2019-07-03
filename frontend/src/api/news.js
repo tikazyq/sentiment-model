@@ -2,6 +2,7 @@ import request from '../utils/request'
 
 export function getList(params) {
   if (!params) params = {}
+  params.sort_key = 'ts'
   // params.page_size = 999999
   // params.page_num = 1
   return request({

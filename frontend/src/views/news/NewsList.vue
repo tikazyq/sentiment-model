@@ -1,20 +1,76 @@
 <template>
   <div class="app-container">
+    <el-dialog
+      :visible.sync="dialogVisible"
+    >
+      <h4 v-if="activeRow.title">
+        {{activeRow.title}}
+      </h4>
+      <p class="dialog-text">
+        {{activeRow.text}}
+      </p>
+      <template slot="footer">
+        <el-button
+          type="danger"
+          :plain="activeRow.class!==1"
+          icon="el-icon-top"
+          @click="selectUp(activeRow)"
+        />
+        <el-button
+          type="info"
+          :plain="activeRow.class!==0"
+          icon="el-icon-minus"
+          @click="selectFlat(activeRow)"
+        />
+        <el-button
+          type="success"
+          :plain="activeRow.class!==-1"
+          icon="el-icon-bottom"
+          @click="selectDown(activeRow)"
+        />
+        <el-button type="primary" @click="dialogVisible = false">确定</el-button>
+      </template>
+    </el-dialog>
+
     <el-row>
       <el-table
         :data="tableData"
         stripe
       >
         <el-table-column
-          prop="id"
-          label="ID"
-          width="120"
-        />
+          prop="source"
+          label="来源"
+          width="80"
+        >
+          <template slot-scope="scope">
+            <div class="small-text">
+              {{scope.row.source}}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="ts"
+          label="时间"
+          width="150"
+        >
+          <template slot-scope="scope">
+            <div class="small-text">
+              {{scope.row.ts}}
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="text"
           label="新闻"
+          min-width="400"
           width="auto"
-        />
+        >
+          <template slot-scope="scope">
+            <p class="text" @click="showDetail(scope.row)">
+              {{scope.row.title ? scope.row.title : scope.row.text}}
+            </p>
+          </template>
+        </el-table-column>
         <el-table-column
           label="涉及股票"
           width="200"
@@ -92,7 +148,9 @@ export default {
     return {
       tableData: [],
       pageNum: 1,
-      pageSize: 10
+      pageSize: 10,
+      dialogVisible: false,
+      activeRow: {}
     }
   },
   computed: {},
@@ -153,6 +211,10 @@ export default {
           code: s
         }
       })
+    },
+    showDetail(row) {
+      this.activeRow = row
+      this.dialogVisible = true
     }
   },
   created() {
@@ -169,5 +231,22 @@ export default {
 
   .el-tag:hover {
     text-decoration: underline;
+  }
+
+  .text {
+    cursor: pointer;
+  }
+
+  .text:hover {
+    text-decoration: underline;
+  }
+
+  .small-text {
+    font-size: 12px;
+  }
+
+  .dialog-text {
+    max-height: 480px;
+    overflow-y: auto;
   }
 </style>

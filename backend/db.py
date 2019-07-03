@@ -165,9 +165,9 @@ class DbManager(object):
         col = self.db[col_name]
         return col.aggregate(pipelines, **kwargs)
 
-    def create_index(self, col_name: str, keys: dict, **kwargs):
+    def create_index(self, col_name: str, **kwargs):
         col = self.db[col_name]
-        col.create_index(keys=keys, **kwargs)
+        col.create_index(**kwargs)
 
     def distinct(self, col_name: str, key: str, filter: dict):
         col = self.db[col_name]
