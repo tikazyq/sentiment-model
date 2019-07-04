@@ -154,6 +154,9 @@ export default {
     type() {
     },
     code() {
+    },
+    dateRange() {
+      this.getData()
     }
   },
   methods: {
