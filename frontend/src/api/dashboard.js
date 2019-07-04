@@ -76,7 +76,13 @@ export function getStockDailyBasic(params) {
 export function getNews(params) {
   if (!params) params = {}
   params.page_size = 999999
-  params.filter = JSON.stringify({ stocks: params.code })
+  params.filter = JSON.stringify({
+    stocks: params.code,
+    class_final: {
+      $in: [-1, 1]
+    }
+  })
+  params.sort_key = 'ts'
   return request({
     url: '/news',
     method: 'get',

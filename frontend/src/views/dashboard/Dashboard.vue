@@ -69,11 +69,11 @@
     </el-row>
     <el-row>
       <el-col :span="12" style="padding-right: 10px;">
-        <h4 class="title">正面新闻</h4>
+        <h4 class="title">正面新闻 <span class="count">({{posNewsList.length}}条)</span></h4>
         <news-list :news-list="posNewsList"/>
       </el-col>
       <el-col :span="12" style="padding-left: 10px;">
-        <h4 class="title">负面新闻</h4>
+        <h4 class="title">负面新闻 <span class="count">({{negNewsList.length}}条)</span></h4>
         <news-list :news-list="negNewsList"/>
       </el-col>
     </el-row>
@@ -136,18 +136,24 @@ export default {
     posNewsList() {
       return this.newsList
         .filter(d => {
-          if (d.class !== undefined) return d.class === 1
-          return d.class_pred === 1
+          const dt = dayjs(d.ts).format('YYYYMMDD')
+          return dayjs(this.dateRange[0]).format('YYYYMMDD') <= dt &&
+            dt < dayjs(this.dateRange[1]).add(1, 'day').format('YYYYMMDD')
         })
-        .sort((a, b) => a.proba_pred > b.proba_pred ? -1 : 1)
+        .filter(d => {
+          return d.class_final === 1
+        })
     },
     negNewsList() {
       return this.newsList
         .filter(d => {
-          if (d.class !== undefined) return d.class === -1
-          return d.class_pred === -1
+          const dt = dayjs(d.ts).format('YYYYMMDD')
+          return dayjs(this.dateRange[0]).format('YYYYMMDD') <= dt &&
+            dt < dayjs(this.dateRange[1]).add(1, 'day').format('YYYYMMDD')
         })
-        .sort((a, b) => a.proba_pred > b.proba_pred ? -1 : 1)
+        .filter(d => {
+          return d.class_final === -1
+        })
     }
   },
   watch: {
@@ -390,6 +396,8 @@ export default {
     async getNews() {
       const params = {}
       params.code = this.code
+      params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
+      params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
       getNews(params).then(data => {
         this.newsList = data.items
       })
@@ -475,6 +483,9 @@ export default {
   }
 
   h4.title {
+    margin: 0;
+    padding-top: 20px;
+    padding-bottom: 0;
     color: #555;
   }
 </style>

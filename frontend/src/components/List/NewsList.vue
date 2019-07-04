@@ -38,13 +38,23 @@ export default {
 
 <style scoped>
   .news-list {
+    border: 1px solid #999;
+    border-radius: 5px;
+    margin: 5px 0;
     padding: 0;
     list-style: none;
+    height: 480px;
+    overflow-y: auto;
   }
 
   .news-item {
-    margin: 10px 0;
+    /*margin: 5px;*/
+    padding: 5px;
     display: flex;
+  }
+
+  .news-item:nth-of-type(odd) {
+    background: #eee;
   }
 
   .news-item:hover {
