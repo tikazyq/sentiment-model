@@ -11,8 +11,8 @@ MONGO_DB = 'crawlab_test'
 MONGO_AUTH_DB = 'crawlab_test'
 
 # model
-MODEL_DIR = 'C:\\Users\\marvzhang\\sentiment-model\\backend'
-# MODEL_DIR = './models'
+# MODEL_DIR = 'C:\\Users\\marvzhang\\sentiment-model\\backend'
+MODEL_DIR = './models'
 MODEL_NAME = 'mlp'
 # MODEL_NAME = 'lg'
 # MODEL_NAME = 'nb'
