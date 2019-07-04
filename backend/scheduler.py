@@ -58,6 +58,7 @@ def predict_news():
             # 'proba_list': p
         })
         i += 1
+    print('predicting news complete')
 
 
 @scheduler.scheduled_job('interval', hours=1)
