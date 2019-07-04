@@ -38,7 +38,7 @@ def predict_news():
     txt = []
     news_list = []
     for i, d in enumerate(col.find(query).limit(batch_size)):
-        if i % 100 == 0 and i > 0:
+        if (i % 100 == 0 and i > 0) or i - 1 == batch_size:
             print(f'{i}/{batch_size}')
         text = d.get('text')
         txt.append(text)
@@ -51,7 +51,7 @@ def predict_news():
     # proba = proba / proba.sum(axis=1)
     i = 0
     for d, cls in zip(news_list, cls_list):
-        if i % 100 == 0 and i > 0:
+        if (i % 100 == 0 and i > 0) or i - 1 == batch_size:
             print(f'{i}/{1000}')
         db_manager.update_one('stock_news', d['_id'], {
             'class_pred': cls
