@@ -6,10 +6,10 @@
       class="news-item"
     >
       <div class="time">
-        {{dayjs(n.created_at).format('YYYY-MM-DD HH:mm:ss')}}
+        {{n.ts}}
       </div>
       <div class="text">
-        {{n.text}}
+        {{n.title ? n.title : n.text}}
       </div>
     </li>
   </ul>
