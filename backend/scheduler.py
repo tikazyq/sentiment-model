@@ -29,27 +29,33 @@ def predict_news():
     col = db_manager.db['stock_news']
     query = {'class': {'$exists': False}, 'class_pred': {'$exists': False}}
     count = col.count(query)
+
+    if count == 0:
+        return
+
+    batch_size = 1000
+
     txt = []
     news_list = []
-    for i, d in enumerate(col.find(query)):
+    for i, d in enumerate(col.find(query).limit(batch_size)):
         if i % 100 == 0 and i > 0:
-            print(f'{i}/{count}')
+            print(f'{i}/{batch_size}')
         text = d.get('text')
         txt.append(text)
         news_list.append(d)
 
     X = vec.transform(txt)
     cls_list = clf.predict(X)
-    proba = clf.predict_proba(X)
+    # proba = clf.predict_proba(X)
     # idx = cls_list.index(cls)
-    proba = proba / proba.sum(axis=1)
+    # proba = proba / proba.sum(axis=1)
     i = 0
-    for d, cls, p in zip(news_list, cls_list, proba):
+    for d, cls in zip(news_list, cls_list):
         if i % 100 == 0 and i > 0:
             print(f'{i}/{count}')
         db_manager.update_one('stock_news', d['_id'], {
-            'class_pred': cls,
-            'proba_list': p
+            'class_pred': cls
+            # 'proba_list': p
         })
         i += 1
 
