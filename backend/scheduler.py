@@ -52,7 +52,7 @@ def predict_news():
     i = 0
     for d, cls in zip(news_list, cls_list):
         if i % 100 == 0 and i > 0:
-            print(f'{i}/{count}')
+            print(f'{i}/{1000}')
         db_manager.update_one('stock_news', d['_id'], {
             'class_pred': cls
             # 'proba_list': p
