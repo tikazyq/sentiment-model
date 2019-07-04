@@ -83,7 +83,7 @@ class DbManager(object):
         :param limit: limit number
         """
         if sort_key is None:
-            sort_key = '_i'
+            sort_key = '_id'
         col = self.db[col_name]
         data = []
         for item in col.find(cond).sort(sort_key, sort_direction).skip(skip).limit(limit):

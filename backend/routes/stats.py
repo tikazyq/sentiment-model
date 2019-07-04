@@ -20,17 +20,30 @@ class StatsApi(BaseApi):
         start_date = args.get('start_date')
         end_date = args.get('end_date')
         ts_code = args.get('ts_code')
-        start_ts = datetime.strptime(start_date, '%Y%m%d').timestamp() * 1e3
-        end_ts = datetime.strptime(end_date, '%Y%m%d').timestamp() * 1e3
+        start_ts = datetime.strptime(start_date, '%Y%m%d')
+        end_ts = datetime.strptime(end_date, '%Y%m%d')
         query = {
-            'created_at': {
+            'ts': {
                 '$gte': start_ts,
                 '$lt': end_ts
             }
         }
         if ts_code is not None:
             query['stocks'] = ts_code
-        items = db_manager.list('results_xueqiu', query, limit=999999)
+
+        db_manager.aggregate('stock_news', [
+            {
+                '$match': query
+            },
+            {
+                '$group': {
+                    '_id': {
+                    }
+                }
+            }
+        ])
+
+        items = db_manager.list('stock_news', query, limit=999999)
         data = defaultdict(int)
         daily = {
             -1: defaultdict(int),
@@ -44,7 +57,7 @@ class StatsApi(BaseApi):
             if cls is not None:
                 data[cls] += 1
 
-            date = datetime.fromtimestamp(item['created_at'] / 1e3).strftime('%Y%m%d')
+            date = item['ts'].strftime('%Y%m%d')
             daily[cls][date] += 1
 
         daily_data = {

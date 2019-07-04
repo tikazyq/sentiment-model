@@ -2,6 +2,7 @@
   <div class="app-container">
     <el-dialog
       :visible.sync="dialogVisible"
+      width="80%"
     >
       <h4 v-if="activeRow.title">
         {{activeRow.title}}
