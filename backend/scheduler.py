@@ -18,7 +18,7 @@ def train_model():
     print(f'response: {r.content.decode("utf-8")}')
 
 
-# @scheduler.scheduled_job('interval', seconds=10)
+@scheduler.scheduled_job('interval', minutes=1)
 def predict_news():
     print('predicting news...')
     filename = os.path.join(config.MODEL_DIR, f'{config.MODEL_NAME}.pkl')
