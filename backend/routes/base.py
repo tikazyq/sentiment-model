@@ -1,11 +1,12 @@
 import json
 
+from bson import ObjectId
 from flask_restful import reqparse, Resource
 # from flask_restplus import reqparse, Resource
 from pymongo import DESCENDING
 
 from db import db_manager
-from utils import jsonify
+from utils import jsonify, is_object_id
 
 DEFAULT_ARGS = [
     'page_num',
@@ -27,6 +28,7 @@ class BaseApi(Resource):
         self.parser.add_argument('page_num', type=int)
         self.parser.add_argument('page_size', type=int)
         self.parser.add_argument('filter', type=str)
+        self.parser.add_argument('sort_key', type=str)
 
         for arg, type in self.arguments:
             self.parser.add_argument(arg, type=type)
@@ -75,6 +77,11 @@ class BaseApi(Resource):
                 page_size = args.page_size
                 # page = int(args.page_size)
 
+            # sort key
+            sort_key = '_id'
+            if args.get('sort_key') is not None:
+                sort_key = args.sort_key
+
             # total count
             total_count = db_manager.count(col_name=self.col_name, cond=cond)
 
@@ -83,7 +90,7 @@ class BaseApi(Resource):
                                     cond=cond,
                                     skip=(page - 1) * page_size,
                                     limit=page_size,
-                                    sort_key='_id',
+                                    sort_key=sort_key,
                                     sort_direction=DESCENDING)
 
             return {
@@ -96,6 +103,8 @@ class BaseApi(Resource):
 
         # get item by id
         else:
+            if is_object_id(id):
+                id = ObjectId(id)
             return jsonify(db_manager.get(col_name=self.col_name, id=id))
 
     def put(self) -> (dict, tuple):
@@ -122,6 +131,8 @@ class BaseApi(Resource):
         :return:
         """
         args = self.parser.parse_args()
+        if is_object_id(id):
+            id = ObjectId(id)
         item = db_manager.get(col_name=self.col_name, id=id)
         if item is None:
             return {
@@ -170,6 +181,8 @@ class BaseApi(Resource):
         :return:
         """
         # perform delete action
+        if is_object_id(id):
+            id = ObjectId(id)
         db_manager.remove_one(col_name=self.col_name, id=id)
 
         # execute after_update hook

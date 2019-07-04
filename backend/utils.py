@@ -1,7 +1,16 @@
 import json
+import re
 from datetime import datetime
 
 from bson import json_util
+
+
+def is_object_id(id: str) -> bool:
+    """
+    Determine if the id is a valid ObjectId string
+    :param id: ObjectId string
+    """
+    return re.search('^[a-zA-Z0-9]{24}$', id) is not None
 
 
 def jsonify(obj: (dict, list)) -> (dict, list):

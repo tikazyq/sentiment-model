@@ -106,7 +106,7 @@ export default {
     return {
       chart: undefined,
       type: 'stock',
-      code: '000001.SZ',
+      code: '600000.SH',
       stockList: [],
       stockIndexList: [],
       dailyList: [],
@@ -152,7 +152,6 @@ export default {
   },
   watch: {
     type() {
-      this.code = ''
     },
     code() {
     },
@@ -409,7 +408,6 @@ export default {
     if (this.$route.query.code) this.code = this.$route.query.code
     this.getStockIndexList()
     this.getStockList()
-    console.log(this.code)
     this.getData()
   }
 }

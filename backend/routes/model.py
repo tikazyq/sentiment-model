@@ -63,13 +63,17 @@ class ModelApi(BaseApi):
         return getattr(self, action)()
 
     def train(self):
-        data = [d for d in db_manager.list('results_xueqiu', {}, limit=9999999)]
+        query = {
+            'class': {
+                '$exists': True
+            }
+        }
+        data = [d for d in db_manager.list('stock_news', query, limit=9999999)]
         df = DataFrame(data)
-        df = df[~df['class'].isnull()]
         df.index = range(len(df))
 
         # 文本
-        txt = df.text
+        txt = df.title.fillna('') + df.text
 
         # 目标向量
         y = df['class']
