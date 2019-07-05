@@ -66,5 +66,13 @@ pipeline {
                 """
             }
         }
+        stage('Cleanup') {
+            steps {
+                echo 'Cleanup...'
+                sh """
+                docker images -q --filter "dangling=true" | xargs -t --no-run-if-empty docker rmi
+                """
+            }
+        }
     }
 }
