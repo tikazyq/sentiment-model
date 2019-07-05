@@ -44,9 +44,50 @@ class StatsApi(BaseApi):
             }
         ])]
 
+        daily = [x for x in db_manager.aggregate('stock_news', [
+            {
+                '$match': query
+            },
+            {
+                '$project': {
+                    'class': '$class_final',
+                    'date': {
+                        '$dateToString': {
+                            'format': '%Y%m%d',
+                            'date': '$ts'
+                        }
+                    }
+                }
+            },
+            {
+                '$group': {
+                    '_id': {
+                        'date': '$date',
+                        'class': '$class',
+                    },
+                    'count': {'$sum': 1}
+                }
+            },
+            {
+                '$project': {
+                    'date': '$_id.date',
+                    'class': '$_id.class',
+                    'count': '$count',
+                    '_id': 0
+                }
+            },
+            {
+                '$sort': {
+                    'class': 1,
+                    'date': 1
+                }
+            }
+        ])]
+
         return {
             'status': 'ok',
-            'stats': jsonify(stats)
+            'stats': jsonify(stats),
+            'daily': jsonify(daily)
         }
 
         # items = db_manager.list('stock_news', query, limit=999999)

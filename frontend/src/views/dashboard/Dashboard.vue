@@ -53,7 +53,7 @@
                 :fetch-suggestions="fetchCodeSuggestions"
                 @select="onSelectCode"
               />
-              <el-button size="small" type="primary" @click="getData">查询</el-button>
+              <!--<el-button size="small" type="primary" @click="getData">查询</el-button>-->
             </div>
             <div class="right">
               <el-date-picker
