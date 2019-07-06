@@ -4,8 +4,13 @@
       <div class="metric-list">
         <div class="metric-item">
           <el-col>
-            <div class="title">{{info.name}}</div>
-            <div class="value">{{info.ts_code}}</div>
+            <div class="title">
+              {{info.name}}
+              <span class="sub-title"> ({{info.market}} / {{info.industry}} / {{info.area}})</span>
+            </div>
+            <div class="value">
+              {{info.ts_code}}
+            </div>
           </el-col>
         </div>
         <div class="metric-item pos">
@@ -91,9 +96,8 @@ import {
   getNewsStats,
   getStock,
   getStockIndex,
-  getNews,
   getStockDailyBasic
-} from '../../api/dashboard'
+} from '../../api/stock'
 import NewsList from '../../components/List/NewsList'
 
 const upColor = '#ec0000'
@@ -112,12 +116,10 @@ export default {
       dailyList: [],
       newsStats: {
         '-1': 0,
-        '0': 0,
         '1': 0
       },
       newsDaily: {
         '-1': [],
-        '0': [],
         '1': []
       },
       newsList: [],
@@ -191,6 +193,8 @@ export default {
         return r
         // return d.vol
       })
+      const dataPos = this.newsDaily['1'].map(d => d.count)
+      const dataNeg = this.newsDaily['-1'].map(d => -d.count)
       const option = {
         tooltip: {
           trigger: 'axis'
@@ -204,12 +208,13 @@ export default {
             }
           },
           {
-            scale: true,
+            // scale: true,
             gridIndex: 1,
-            axisLabel: { show: false },
-            axisLine: { show: false },
-            axisTick: { show: false },
-            splitLine: { show: false }
+            axisLabel: { show: true },
+            axisLine: { show: true },
+            axisTick: { show: true },
+            splitLine: { show: false },
+            splitArea: { show: true }
           }
         ],
         xAxis: [
@@ -220,7 +225,7 @@ export default {
             gridIndex: 1,
             data: xData,
             axisLabel: { show: false },
-            axisLine: { show: false },
+            axisLine: { show: true },
             axisTick: { show: false },
             splitLine: { show: false }
           }
@@ -230,13 +235,13 @@ export default {
             left: '5%',
             right: '0%',
             top: '5%',
-            height: '50%'
+            height: '55%'
           },
           {
             left: '5%',
             right: '0%',
-            top: '73%',
-            height: '16%'
+            top: '70%',
+            height: '25%'
           }
         ],
         series: [
@@ -253,30 +258,54 @@ export default {
               }
             }
           },
+          // {
+          //   type: 'bar',
+          //   gridIndex: 1,
+          //   xAxisIndex: 1,
+          //   yAxisIndex: 1,
+          //   data: dataVol
+          // },
           {
             type: 'bar',
+            barWidth: '50%',
+            stack: true,
             gridIndex: 1,
             xAxisIndex: 1,
             yAxisIndex: 1,
-            data: dataVol
-          }
-        ],
-        markPoint: {
-          itemStyle: {
-            normal: { color: 'rgb(41,60,85)' }
+            data: dataPos,
+            itemStyle: {
+              color: upColor
+            }
           },
-          data: this.newsDaily['1']
-            .filter(d => d.value > 0)
-            .map(d => {
-              const dateList = this.dailyList.map(d => d.trade_date)
-              const idx = dateList.indexOf(d.date)
-              if (idx === -1) return { coord: [0, 0], value: undefined }
-              return {
-                coord: [d.date, this.dailyList[idx].close],
-                value: d.value
-              }
-            })
-        }
+          {
+            type: 'bar',
+            barWidth: '50%',
+            stack: true,
+            gridIndex: 1,
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data: dataNeg,
+            itemStyle: {
+              color: downColor
+            }
+          }
+        ]
+        // markPoint: {
+        //   itemStyle: {
+        //     normal: { color: 'rgb(41,60,85)' }
+        //   },
+        //   data: this.newsDaily['1']
+        //     .filter(d => d.value > 0)
+        //     .map(d => {
+        //       const dateList = this.dailyList.map(d => d.trade_date)
+        //       const idx = dateList.indexOf(d.date)
+        //       if (idx === -1) return { coord: [0, 0], value: undefined }
+        //       return {
+        //         coord: [d.date, this.dailyList[idx].close],
+        //         value: d.value
+        //       }
+        //     })
+        // }
       }
       this.chart.setOption(option)
       this.chart.on('click', ev => {
@@ -326,16 +355,18 @@ export default {
         this.stockList = data.items
       })
     },
-    async getDaily() {
-      const params = {}
-      params.ts_code = this.code
-      params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
-      params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
-      const func = this.type === 'index' ? getIndexDaily : getStockDaily
-      func(params).then(data => {
-        this.dailyList = data.items
-        this.dailyList.sort((a, b) => a.trade_date < b.trade_date ? -1 : 1)
-        this.renderDaily()
+    getDaily() {
+      return new Promise((resolve, reject) => {
+        const params = {}
+        params.ts_code = this.code
+        params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
+        params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
+        const func = this.type === 'index' ? getIndexDaily : getStockDaily
+        func(params).then(data => {
+          this.dailyList = data.items
+          this.dailyList.sort((a, b) => a.trade_date < b.trade_date ? -1 : 1)
+          resolve()
+        })
       })
     },
     fetchCodeSuggestions(queryString, cb) {
@@ -365,21 +396,37 @@ export default {
         params.ts_code = this.code
       }
       getNewsStats(params).then(data => {
-        const clsList = ['-1', '0', '1']
+        const clsList = ['-1', '1']
         clsList.forEach(cls => {
-          this.$set(this.newsStats, cls, data.data[cls] || 0)
-          this.$set(this.newsDaily, cls, data.daily[cls].sort((a, b) => a.date < b.date ? -1 : 1) || [])
+          this.$set(this.newsStats, cls, data.stats[cls])
+          this.$set(
+            this.newsDaily,
+            cls,
+            data.daily_stats[cls]
+              .map(d => {
+                d.value = d.count
+                return d
+              })
+              .sort((a, b) => a.date < b.date ? -1 : 1)
+          )
         })
 
+        // 新闻列表
+        this.newsList = data.news
+
+        // 正负新闻图
         this.renderMetricPosChart()
         this.renderMetricNegChart()
+
+        // 每日数据图
+        this.renderDaily()
       })
     },
     async getData() {
       await this.getInfo()
-      await this.getNewsStats()
-      await this.getDaily()
-      await this.getNews()
+      await this.getDaily().then(() => {
+        this.getNewsStats()
+      })
       if (this.type === 'stock') await this.getStockDailyBasic()
     },
     async getInfo() {
@@ -393,15 +440,15 @@ export default {
         }
       })
     },
-    async getNews() {
-      const params = {}
-      params.code = this.code
-      params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
-      params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
-      getNews(params).then(data => {
-        this.newsList = data.items
-      })
-    },
+    // async getNews() {
+    //   const params = {}
+    //   params.code = this.code
+    //   params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
+    //   params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
+    //   getNews(params).then(data => {
+    //     this.newsList = data.items
+    //   })
+    // },
     async getStockDailyBasic() {
       const params = {}
       params.ts_code = this.code
@@ -428,7 +475,7 @@ export default {
   }
 
   #k-chart {
-    height: 400px;
+    height: 480px;
     width: 100%;
   }
 
@@ -487,5 +534,10 @@ export default {
     padding-top: 20px;
     padding-bottom: 0;
     color: #555;
+  }
+
+  .sub-title {
+    font-weight: 300;
+    font-size: 12px;
   }
 </style>

@@ -72,7 +72,7 @@ class DbManager(object):
         col.remove({'_id': _id})
 
     def list(self, col_name: str, cond: dict, sort_key=None, sort_direction=DESCENDING, skip: int = 0, limit: int = 100,
-             **kwargs) -> list:
+             project=None, **kwargs) -> list:
         """
         Return a list of items given specified condition, sort_key, sort_direction, skip, and limit.
         :param col_name: collection name
@@ -81,12 +81,14 @@ class DbManager(object):
         :param sort_direction: sort direction
         :param skip: skip number
         :param limit: limit number
+        :param project: project
+        :param kwargs: kwargs
         """
         if sort_key is None:
             sort_key = '_id'
         col = self.db[col_name]
         data = []
-        for item in col.find(cond).sort(sort_key, sort_direction).skip(skip).limit(limit):
+        for item in col.find(cond, project).sort(sort_key, sort_direction).skip(skip).limit(limit):
             data.append(item)
         return data
 

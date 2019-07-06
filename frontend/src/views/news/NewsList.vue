@@ -206,7 +206,7 @@ export default {
     },
     clickStock(s) {
       this.$router.push({
-        path: '/dashboard',
+        path: '/stock/detail',
         query: {
           type: 'stock',
           code: s

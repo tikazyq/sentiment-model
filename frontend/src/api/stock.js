@@ -27,6 +27,24 @@ export function getStockList(params) {
   })
 }
 
+export function getStockListStats(params) {
+  if (!params) params = {}
+  return request({
+    url: '/stats/get_stock_list',
+    method: 'get',
+    params
+  })
+}
+
+export function getIndustryListStats(params) {
+  if (!params) params = {}
+  return request({
+    url: '/stats/get_industry_list',
+    method: 'get',
+    params
+  })
+}
+
 export function getStockIndexList(params) {
   if (!params) params = {}
   params.page_size = 999999

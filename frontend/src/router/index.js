@@ -33,7 +33,7 @@ import Layout from '@/layout'
 export const constantRoutes = [
   {
     path: '/login',
-    component: () => import('@/views/login/index'),
+    component: () => import('../views/login/index'),
     hidden: true
   },
 
@@ -45,25 +45,66 @@ export const constantRoutes = [
 
   {
     path: '/',
-    component: Layout,
-    redirect: '/dashboard',
-    children: [{
-      path: 'dashboard',
-      name: 'Dashboard',
-      component: () => import('../views/dashboard/Dashboard'),
-      meta: { title: 'Dashboard', icon: 'dashboard' }
-    }]
+    redirect: '/stock'
   },
 
   {
-    path: '/',
+    path: '/industry',
     component: Layout,
-    // redirect: '/news',
+    redirect: '/industry/list',
+    meta: {
+      title: '行业',
+      className: 'fa fa-dollar'
+    },
+    children: [
+      {
+        path: 'list',
+        name: 'IndustryList',
+        component: () => import('../views/industry/IndustryList'),
+        meta: { title: '行业列表', className: 'fa fa-circle-o' }
+      },
+      {
+        path: 'detail',
+        name: 'IndustryDetail',
+        component: () => import('../views/industry/IndustryDetail'),
+        meta: { title: '行业详情', className: 'fa fa-circle-o' }
+      }
+    ]
+  },
+
+  {
+    path: '/stock',
+    component: Layout,
+    redirect: '/stock/list',
+    meta: {
+      title: '股票',
+      className: 'fa fa-bank'
+    },
+    children: [
+      {
+        path: 'list',
+        name: 'StockList',
+        component: () => import('../views/stock/StockList'),
+        meta: { title: '股票列表', className: 'fa fa-circle-o' }
+      },
+      {
+        path: 'detail',
+        name: 'StockDetail',
+        component: () => import('../views/stock/StockDetail'),
+        meta: { title: '股票详情', className: 'fa fa-circle-o' }
+      }
+    ]
+  },
+
+  {
+    path: '/news',
+    component: Layout,
+    redirect: '/news/list',
     children: [{
-      path: 'news',
-      name: 'News List',
+      path: 'list',
+      name: 'NewsList',
       component: () => import('../views/news/NewsList'),
-      meta: { title: 'News', icon: 'table' }
+      meta: { title: '新闻列表', className: 'fa fa-rss' }
     }]
   },
 
