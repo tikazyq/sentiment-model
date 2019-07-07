@@ -40,9 +40,9 @@
     <el-table
       v-loading="loading"
       class="table"
-      :data="stockList"
-      height="480px"
+      :data="filteredStockList"
       border
+      @row-click="onRowClick"
     >
       <el-table-column
         label="代码"
@@ -95,6 +95,11 @@
         width="100px"
       />
     </el-table>
+    <el-pagination
+      :total="stockList.length"
+      :page-size.sync="pageSize"
+      :current-page.sync="pageNum"
+    />
   </div>
 </template>
 
@@ -117,7 +122,16 @@ export default {
         dayjs().subtract(1, 'month'),
         dayjs().subtract(0, 'd')
       ],
+      pageNum: 1,
+      pageSize: 50,
       stockList: []
+    }
+  },
+  computed: {
+    filteredStockList() {
+      return this.stockList.filter((d, i) => {
+        return this.pageSize * (this.pageNum - 1) <= i && i < this.pageSize * this.pageNum
+      })
     }
   },
   watch: {
@@ -150,6 +164,9 @@ export default {
       getIndustryListStats().then(data => {
         this.industryList = data.industries
       })
+    },
+    onRowClick(row, column, event) {
+      this.$router.push('/stock/detail?code=' + row.ts_code)
     }
   },
   created() {
@@ -180,6 +197,7 @@ export default {
   }
 
   .el-table {
+    min-height: 480px;
     margin-top: 10px;
     border-radius: 5px;
   }
@@ -191,5 +209,9 @@ export default {
   .el-table >>> th,
   .el-table >>> td {
     padding: 5px 0;
+  }
+
+  .el-table >>> tbody tr {
+    cursor: pointer;
   }
 </style>

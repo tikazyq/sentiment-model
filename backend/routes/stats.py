@@ -1,6 +1,13 @@
+import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+import requests
+from pandas import DataFrame
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
+import config
 from db import db_manager
 from routes.base import BaseApi
 from utils import jsonify
@@ -76,7 +83,6 @@ class StatsApi(BaseApi):
             }
         ])]
         news_stats_dict = {x['_id']: x for x in news_stats}
-        print(news_stats_dict)
 
         # 将股票列表与新闻数据join起来
         for i in range(len(stock_list)):
@@ -225,46 +231,71 @@ class StatsApi(BaseApi):
             else:
                 stats[cls] = 0
 
+        # 获取建议
+        recom_news = self._get_recom_news(stats)  # 舆情建议
+        recom_position = 0
+        recom_trend = self._get_recom_trend(ts_code, start_date, end_date)
+        recom_overall = self._get_recom_overall(
+            recom_news,
+            recom_position,
+            recom_trend,
+        )
+
         return {
             'status': 'ok',
             'stats': jsonify(stats),
             'daily_stats': jsonify(daily_stats),
             'news': jsonify(news_list),
+            'recom': {
+                'news': recom_news,
+                'position': recom_position,
+                'trend': recom_trend,
+                'overall': recom_overall,
+            }
         }
 
-        # items = db_manager.list('stock_news', query, limit=999999)
-        # data = defaultdict(int)
-        # daily = {
-        #     -1: defaultdict(int),
-        #     0: defaultdict(int),
-        #     1: defaultdict(int)
-        # }
-        # for item in items:
-        #     cls = item.get('class')
-        #     if cls is None:
-        #         cls = item.get('class_pred')
-        #     if cls is not None:
-        #         data[cls] += 1
-        #
-        #     date = item['ts'].strftime('%Y%m%d')
-        #     daily[cls][date] += 1
-        #
-        # daily_data = {
-        #     -1: [],
-        #     0: [],
-        #     1: [],
-        # }
-        # dt = start_date
-        # while dt <= end_date:
-        #     for cls in daily_data.keys():
-        #         daily_data[cls].append({
-        #             'date': dt,
-        #             'value': daily[cls].get(dt) or 0
-        #         })
-        #     dt = (datetime.strptime(dt, '%Y%m%d') + timedelta(1)).strftime('%Y%m%d')
-        #
-        # return {
-        #     'status': 'ok',
-        #     'data': data,
-        #     'daily': daily_data
-        # }
+    @staticmethod
+    def _get_recom_news(stats):
+        if sum(stats.values()) == 0:
+            return 0
+
+        news_threshold = 0.2
+        if abs(stats[1] - stats[-1]) / sum(stats.values()) > news_threshold:
+            if stats[1] > stats[-1]:
+                recom_news = 1
+            else:
+                recom_news = -1
+        else:
+            recom_news = 0
+        return recom_news
+
+    def _get_recom_trend(self, ts_code, start_date, end_date):
+        trend_threshold = 0.02
+        r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock/daily?ts_code={ts_code}&'
+                         f'start_date={start_date}&end_date={end_date}')
+        data = json.loads(r.content)
+        df = DataFrame(data['items'])
+        df = df.sort_values('trade_date')
+        X = np.arange(0, len(df)).reshape(-1, 1)
+        y = df['close']
+        reg = LinearRegression()
+        reg.fit(X, y)
+        if abs(reg.coef_[0]) > trend_threshold:
+            if reg.coef_[0] > 0:
+                return 1
+            else:
+                return -1
+        else:
+            return 0
+
+    @staticmethod
+    def _get_recom_overall(*values):
+        value = sum(values)
+        if value >= 1:
+            return 1
+        elif value == 0:
+            return 0
+        elif value <= -1:
+            return -1
+        else:
+            return 0

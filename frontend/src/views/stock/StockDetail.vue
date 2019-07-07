@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <el-row>
-      <div class="metric-list">
+      <div class="metric-list" v-loading="loading">
         <div class="metric-item">
           <el-col>
             <div class="title">
@@ -32,31 +32,48 @@
           </el-col>
         </div>
         <div class="metric-item" v-if="type === 'stock'">
-          <el-col>
-            <div class="info">总市值: <span class="info-value">{{stockBasic.total_mv}}</span></div>
-            <div class="info">总股本: <span class="info-value">{{stockBasic.total_share}}</span></div>
-            <div class="info">市盈率: <span class="info-value">{{stockBasic.pe}}</span></div>
+          <el-col :span="9">
+            <div class="title">操作建议</div>
+            <div class="value" :class="getRecomClass(recomStats.overall)">{{getRecomText(recomStats.overall)}}</div>
+          </el-col>
+          <el-col :span="15">
+            <ul class="reason-list">
+              <li class="reason-item" :class="getReasonItemClass(recomStats.news)">
+                <i class="fa" :class="getReasonItemIconClass(recomStats.news)"></i>
+                {{getReasonItemText('news')}}
+              </li>
+              <li class="reason-item" :class="getReasonItemClass(recomStats.position)">
+                <i class="fa" :class="getReasonItemIconClass(recomStats.position)"></i>
+                {{getReasonItemText('position')}}
+              </li>
+              <li class="reason-item" :class="getReasonItemClass(recomStats.trend)">
+                <i class="fa" :class="getReasonItemIconClass(recomStats.trend)"></i>
+                {{getReasonItemText('trend')}}
+              </li>
+            </ul>
           </el-col>
         </div>
       </div>
     </el-row>
     <el-row>
-      <div class="k-chart">
+      <div class="k-chart" v-loading="loading">
         <el-row>
           <div class="control">
             <div class="left">
-              <el-select
-                v-model="type"
-                size="small"
-              >
-                <el-option value="index" label="指数"/>
-                <el-option value="stock" label="股票"/>
-              </el-select>
+              <!--<el-select-->
+              <!--v-model="type"-->
+              <!--size="small"-->
+              <!--style="width: 100px"-->
+              <!--&gt;-->
+              <!--<el-option value="index" label="指数"/>-->
+              <!--<el-option value="stock" label="股票"/>-->
+              <!--</el-select>-->
               <el-autocomplete
                 v-model="code"
                 size="small"
                 :fetch-suggestions="fetchCodeSuggestions"
                 @select="onSelectCode"
+                style="width: 120px"
               />
               <!--<el-button size="small" type="primary" @click="getData">查询</el-button>-->
             </div>
@@ -65,6 +82,7 @@
                 type="daterange"
                 v-model="dateRange"
                 size="small"
+                style="width: 250px"
               />
             </div>
           </div>
@@ -75,11 +93,11 @@
     <el-row>
       <el-col :span="12" style="padding-right: 10px;">
         <h4 class="title">正面新闻 <span class="count">({{posNewsList.length}}条)</span></h4>
-        <news-list :news-list="posNewsList"/>
+        <news-list v-loading="loading" :news-list="posNewsList"/>
       </el-col>
       <el-col :span="12" style="padding-left: 10px;">
         <h4 class="title">负面新闻 <span class="count">({{negNewsList.length}}条)</span></h4>
-        <news-list :news-list="negNewsList"/>
+        <news-list v-loading="loading" :news-list="negNewsList"/>
       </el-col>
     </el-row>
   </div>
@@ -108,6 +126,7 @@ export default {
   components: { NewsList },
   data() {
     return {
+      loading: false,
       chart: undefined,
       type: 'stock',
       code: '600000.SH',
@@ -127,6 +146,12 @@ export default {
       info: {
         ts_code: '',
         name: ''
+      },
+      recomStats: {
+        news: undefined,
+        position: undefined,
+        trend: undefined,
+        overall: undefined
       },
       dateRange: [
         dayjs().subtract(1, 'month'),
@@ -246,6 +271,7 @@ export default {
         ],
         series: [
           {
+            name: '股价',
             type: 'k',
             data,
             gridIndex: 0,
@@ -266,6 +292,7 @@ export default {
           //   data: dataVol
           // },
           {
+            name: '正面新闻',
             type: 'bar',
             barWidth: '50%',
             stack: true,
@@ -278,6 +305,7 @@ export default {
             }
           },
           {
+            name: '负面新闻',
             type: 'bar',
             barWidth: '50%',
             stack: true,
@@ -309,6 +337,11 @@ export default {
       }
       this.chart.setOption(option)
       this.chart.on('click', ev => {
+      })
+
+      // resize
+      this.chart.on('resize', () => {
+        this.renderDaily()
       })
     },
     renderMetricPosChart() {
@@ -389,6 +422,7 @@ export default {
       this.getData()
     },
     async getNewsStats() {
+      this.loading = true
       const params = {}
       params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
       params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
@@ -414,12 +448,17 @@ export default {
         // 新闻列表
         this.newsList = data.news
 
+        // 操作建议
+        this.recomStats = data.recom
+
         // 正负新闻图
         this.renderMetricPosChart()
         this.renderMetricNegChart()
 
         // 每日数据图
         this.renderDaily()
+
+        this.loading = false
       })
     },
     async getData() {
@@ -440,15 +479,6 @@ export default {
         }
       })
     },
-    // async getNews() {
-    //   const params = {}
-    //   params.code = this.code
-    //   params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
-    //   params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
-    //   getNews(params).then(data => {
-    //     this.newsList = data.items
-    //   })
-    // },
     async getStockDailyBasic() {
       const params = {}
       params.ts_code = this.code
@@ -456,6 +486,86 @@ export default {
       getStockDailyBasic(params).then(data => {
         this.stockBasic = data.items[0]
       })
+    },
+    getReasonItemClass(value) {
+      if (value === 1) {
+        return 'pos'
+      } else if (value === 0) {
+        return 'med'
+      } else if (value === -1) {
+        return 'neg'
+      } else {
+        return ''
+      }
+    },
+    getReasonItemIconClass(value) {
+      if (value === 1) {
+        return 'fa-arrow-up'
+      } else if (value === 0) {
+        return 'fa-minus'
+      } else if (value === -1) {
+        return 'fa-arrow-down'
+      } else {
+        return ''
+      }
+    },
+    getReasonItemText(type) {
+      if (type === 'news') {
+        if (this.recomStats.news === 1) {
+          return '新闻舆情偏正面'
+        } else if (this.recomStats.news === 0) {
+          return '新闻舆情偏中性'
+        } else if (this.recomStats.news === -1) {
+          return '新闻舆情偏负面'
+        } else {
+          return ''
+        }
+      } else if (type === 'position') {
+        if (this.recomStats.position === 1) {
+          return '股价为低位'
+        } else if (this.recomStats.position === 0) {
+          return '股价为中位'
+        } else if (this.recomStats.position === -1) {
+          return '股价为高位'
+        } else {
+          return ''
+        }
+      } else if (type === 'trend') {
+        if (this.recomStats.trend === 1) {
+          return '股价趋势为涨'
+        } else if (this.recomStats.trend === 0) {
+          return '股价趋势为平稳'
+        } else if (this.recomStats.trend === -1) {
+          return '股价趋势为跌'
+        } else {
+          return ''
+        }
+      } else {
+        return ''
+      }
+    },
+    getRecomClass(value) {
+      if (value === 1) {
+        return 'buy'
+      } else if (value === 0) {
+        return 'hold'
+      } else if (value === -1) {
+        return 'sell'
+      } else {
+        return ''
+      }
+    },
+    getRecomText(value) {
+      if (value === 1) {
+        return '买入'
+      } else if (value === 0) {
+        return '持有'
+      } else if (value === -1) {
+        return '卖出'
+      } else {
+        console.log(value)
+        return ''
+      }
     }
   },
   created() {
@@ -469,11 +579,6 @@ export default {
 </script>
 
 <style scoped>
-  .metric-list {
-    /*border: 1px solid grey;*/
-    height: 100px;
-  }
-
   #k-chart {
     height: 480px;
     width: 100%;
@@ -494,7 +599,7 @@ export default {
   }
 
   .metric-item {
-    height: 100px;
+    height: 60px;
     flex-basis: 25%;
     display: flex;
     align-items: center;
@@ -511,6 +616,25 @@ export default {
     font-size: 32px;
     color: #555;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .metric-item .value.buy {
+    color: #ec0000;
+  }
+
+  .metric-item .value.hold {
+    color: #E6A23C;
+  }
+
+  .metric-item .value.sell {
+    color: #00da3c;
+  }
+
+  .metric-item .value i {
+    font-size: 14px;
+    color: #555;
   }
 
   .metric-item .info {
@@ -539,5 +663,34 @@ export default {
   .sub-title {
     font-weight: 300;
     font-size: 12px;
+  }
+
+  .reason-list {
+    list-style: none;
+    padding: 0 0 0 10px;
+    margin: 0;
+  }
+
+  .reason-list .reason-item {
+    color: #555;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .reason-list .reason-item i {
+    text-align: center;
+    width: 12px;
+  }
+
+  .reason-list .reason-item.pos i {
+    color: #ec0000;
+  }
+
+  .reason-list .reason-item.med i {
+    color: #E6A23C;
+  }
+
+  .reason-list .reason-item.neg i {
+    color: #00da3c;
   }
 </style>
