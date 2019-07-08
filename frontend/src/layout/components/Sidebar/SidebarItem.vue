@@ -17,8 +17,8 @@
       <template slot="title">
         <item
           v-if="item.meta"
-          :icon="item.meta && item.meta.icon"
           :class-name="item.meta.className"
+          :icon="item.meta && item.meta.icon"
           :title="item.meta.title"
         />
       </template>

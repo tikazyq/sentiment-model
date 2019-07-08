@@ -107,3 +107,11 @@ export function getNews(params) {
     params
   })
 }
+
+export function getNewsItem(params) {
+  if (!params) params = {}
+  return request({
+    url: '/news/' + params.id,
+    method: 'get'
+  })
+}

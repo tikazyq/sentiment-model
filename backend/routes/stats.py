@@ -233,8 +233,8 @@ class StatsApi(BaseApi):
 
         # 获取建议
         recom_news = self._get_recom_news(stats)  # 舆情建议
-        recom_position = 0
-        recom_trend = self._get_recom_trend(ts_code, start_date, end_date)
+        recom_position = self._get_recom_position(ts_code)  # 价位建议
+        recom_trend = self._get_recom_trend(ts_code, start_date, end_date)  # 趋势建议
         recom_overall = self._get_recom_overall(
             recom_news,
             recom_position,
@@ -259,7 +259,7 @@ class StatsApi(BaseApi):
         if sum(stats.values()) == 0:
             return 0
 
-        news_threshold = 0.2
+        news_threshold = 1 / 3
         if abs(stats[1] - stats[-1]) / sum(stats.values()) > news_threshold:
             if stats[1] > stats[-1]:
                 recom_news = 1
@@ -289,13 +289,39 @@ class StatsApi(BaseApi):
             return 0
 
     @staticmethod
+    def _get_recom_position(ts_code):
+        last_n_days = 90
+        range_cuts = [1 / 3, 2 / 3]
+
+        start_date = (datetime.now() - timedelta(last_n_days)).strftime('%Y%m%d')
+        end_date = (datetime.now() - timedelta(0)).strftime('%Y%m%d')
+        r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock/daily?ts_code={ts_code}&'
+                         f'start_date={start_date}&end_date={end_date}')
+        data = json.loads(r.content)
+        df = DataFrame(data['items'])
+        df = df.sort_values('trade_date')
+
+        # 最近一次收盘价
+        current_price = df.iloc[len(df) - 1]['close']
+        min_price = df['close'].min()
+        max_price = df['close'].max()
+
+        # 根据区间确定价位
+        if (current_price - min_price) / (max_price - min_price) > range_cuts[1]:
+            return -1
+        elif (current_price - min_price) / (max_price - min_price) < range_cuts[0]:
+            return 1
+        else:
+            return 0
+
+    @staticmethod
     def _get_recom_overall(*values):
         value = sum(values)
-        if value >= 1:
+        if value >= 2:
             return 1
         elif value == 0:
             return 0
-        elif value <= -1:
+        elif value <= -2:
             return -1
         else:
             return 0

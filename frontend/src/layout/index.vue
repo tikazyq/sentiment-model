@@ -1,18 +1,30 @@
 <template>
   <div :class="classObj" class="app-wrapper">
-    <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
-    <sidebar class="sidebar-container" />
+    <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside"/>
+    <sidebar class="sidebar-container"/>
     <div class="main-container">
       <div :class="{'fixed-header':fixedHeader}">
-        <navbar />
+        <navbar/>
       </div>
-      <app-main />
+      <app-main/>
+      <el-footer>
+        <span>
+          <span>Data powered by </span>
+          <a href="https://github.com/tikazyq/crawlab" target="_blank">Crawlab</a>
+          <span>and</span>
+          <a href="https://tushare.pro/" target="_blank"> Tushare</a> .
+        </span>
+      </el-footer>
     </div>
   </div>
 </template>
 
 <script>
-import { Navbar, Sidebar, AppMain } from './components'
+import {
+  Navbar,
+  Sidebar,
+  AppMain
+} from './components'
 import ResizeMixin from './mixin/ResizeHandler'
 
 export default {
@@ -51,19 +63,21 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  @import "~@/styles/mixin.scss";
-  @import "~@/styles/variables.scss";
+  @import "../styles/mixin.scss";
+  @import "../styles/variables.scss";
 
   .app-wrapper {
     @include clearfix;
     position: relative;
     height: 100%;
     width: 100%;
-    &.mobile.openSidebar{
+
+    &.mobile.openSidebar {
       position: fixed;
       top: 0;
     }
   }
+
   .drawer-bg {
     background: #000;
     opacity: 0.3;
@@ -89,5 +103,20 @@ export default {
 
   .mobile .fixed-header {
     width: 100%;
+  }
+
+  .el-footer {
+    display: flex;
+    align-items: center;
+    background: #304156;
+    border-top: 1px solid #555;
+    font-size: 12px;
+    height: 50px !important;
+    color: rgb(191, 203, 217);
+  }
+
+  .el-footer a {
+    text-decoration: underline;
+    color: #409EFF;
   }
 </style>

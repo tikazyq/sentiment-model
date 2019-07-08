@@ -130,6 +130,12 @@
     .el-menu--collapse {
       .el-submenu {
         &>.el-submenu__title {
+          &>.fa {
+            height: 14px;
+            width: 14px;
+            visibility: visible;
+          }
+
           &>span {
             height: 0;
             width: 0;

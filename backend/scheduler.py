@@ -1,9 +1,15 @@
+import asyncio
+import functools
 import json
 import os
+from datetime import datetime, timedelta
+from random import randint
+from time import sleep
 
 import joblib
 import requests
 from apscheduler.schedulers.background import BackgroundScheduler
+from pymongo import DESCENDING, ASCENDING
 
 import config
 from db import db_manager
@@ -71,6 +77,44 @@ def update_stock_list():
         db_manager.save(col_name='stocks', item=item)
 
 
+@scheduler.scheduled_job('interval', hours=6)
+def update_stock_daily():
+    async def _update(ts_code, semaphore):
+        async with semaphore:
+            # 获取数据
+            r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock/daily?ts_code={ts_code}')
+            data = json.loads(r.content)
+
+            # 删除已有数据
+            db_manager.remove('stock_daily', {'ts_code': ts_code})
+
+            # 批量插入数据
+            items = []
+            for d in data['items']:
+                d['_id'] = d['ts_code'] + '_' + d['trade_date']
+                items.append(d)
+            db_manager.insert_many('stock_daily', items)
+
+    print('updating stock daily...')
+
+    # 创建索引
+    db_manager.create_index('stock_daily', keys=[('trade_date', DESCENDING)])
+    db_manager.create_index('stock_daily', keys=[('ts_code', ASCENDING)])
+
+    # 创建事件循环
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    semaphore = asyncio.Semaphore(500)
+
+    # 遍历股票列表
+    tasks = []
+    for s in db_manager.list('stocks', {}, limit=999999):
+        ts_code = s['ts_code']
+        tasks.append(_update(ts_code, semaphore))  # 开始更新数据
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
+
+
 @scheduler.scheduled_job('interval', hours=1)
 def update_stock_index_list():
     print('updating stock index list...')
@@ -122,6 +166,36 @@ def update_news_class():
         )
 
     print('updating news class complete')
+
+
+@scheduler.scheduled_job('interval', days=1)
+def update_stock_stats():
+    async def _update(url, ts_code):
+        r = await asyncio.get_event_loop().run_in_executor(None, functools.partial(requests.get, url))
+        raw_data = json.loads(r.content)
+        d = raw_data['recom']
+        d['_id'] = ts_code
+        sleep(randint(1, 5))
+        db_manager.save('stock_stats', d)
+
+    print('updating stock stats...')
+
+    last_n_days = 30
+    start_date = (datetime.now() - timedelta(last_n_days)).strftime('%Y%m%d')
+    end_date = (datetime.now() - timedelta(0)).strftime('%Y%m%d')
+
+    data = []
+    for s in db_manager.list('stocks', {}, limit=999999):
+        ts_code = s['ts_code']
+        url = f'http://localhost:{config.FLASK_PORT}/stats/get_news_stats?ts_code={ts_code}' + \
+              f'&start_date={start_date}&end_date={end_date}'
+        data.append({'url': url, 'ts_code': ts_code})
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    tasks = [_update(d['url'], d['ts_code']) for d in data]
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
 
 
 scheduler.start()

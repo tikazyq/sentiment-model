@@ -2,6 +2,7 @@ import tushare as ts
 from flask import request
 
 import config
+from db import db_manager
 from routes.base import BaseApi
 
 

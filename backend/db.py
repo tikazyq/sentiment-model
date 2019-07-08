@@ -31,6 +31,15 @@ class DbManager(object):
 
         return col.save(item, **kwargs)
 
+    def insert_many(self, col_name: str, items: list, **kwargs) -> None:
+        """
+        Save the item in the specified collection
+        :param col_name: collection name
+        :param items: item object list
+        """
+        col = self.db[col_name]
+        return col.insert_many(items, **kwargs)
+
     def remove(self, col_name: str, cond: dict, **kwargs) -> None:
         """
         Remove items given specified condition.

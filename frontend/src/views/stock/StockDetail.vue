@@ -1,5 +1,38 @@
 <template>
   <div class="app-container">
+    <el-dialog
+      :visible.sync="dialogVisible"
+      width="80%"
+    >
+      <h4 v-if="activeRow.title">
+        {{activeRow.title}}
+      </h4>
+      <p class="dialog-text">
+        {{activeRow.text}}
+      </p>
+      <template slot="footer">
+        <el-button
+          type="danger"
+          :plain="activeRow.class!==1"
+          icon="el-icon-top"
+          @click="selectUp(activeRow)"
+        />
+        <el-button
+          type="info"
+          :plain="activeRow.class!==0"
+          icon="el-icon-minus"
+          @click="selectFlat(activeRow)"
+        />
+        <el-button
+          type="success"
+          :plain="activeRow.class!==-1"
+          icon="el-icon-bottom"
+          @click="selectDown(activeRow)"
+        />
+        <el-button type="primary" @click="dialogVisible = false">确定</el-button>
+      </template>
+    </el-dialog>
+
     <el-row>
       <div class="metric-list" v-loading="loading">
         <div class="metric-item">
@@ -56,7 +89,7 @@
       </div>
     </el-row>
     <el-row>
-      <div class="k-chart" v-loading="loading">
+      <div class="k-chart" v-loading="loading" @resize="renderDaily">
         <el-row>
           <div class="control">
             <div class="left">
@@ -73,7 +106,6 @@
                 size="small"
                 :fetch-suggestions="fetchCodeSuggestions"
                 @select="onSelectCode"
-                style="width: 120px"
               />
               <!--<el-button size="small" type="primary" @click="getData">查询</el-button>-->
             </div>
@@ -82,7 +114,6 @@
                 type="daterange"
                 v-model="dateRange"
                 size="small"
-                style="width: 250px"
               />
             </div>
           </div>
@@ -93,11 +124,11 @@
     <el-row>
       <el-col :span="12" style="padding-right: 10px;">
         <h4 class="title">正面新闻 <span class="count">({{posNewsList.length}}条)</span></h4>
-        <news-list v-loading="loading" :news-list="posNewsList"/>
+        <news-list v-loading="loading" :news-list="posNewsList" @click="onClickNewsItem"/>
       </el-col>
       <el-col :span="12" style="padding-left: 10px;">
         <h4 class="title">负面新闻 <span class="count">({{negNewsList.length}}条)</span></h4>
-        <news-list v-loading="loading" :news-list="negNewsList"/>
+        <news-list v-loading="loading" :news-list="negNewsList" @click="onClickNewsItem"/>
       </el-col>
     </el-row>
   </div>
@@ -114,8 +145,12 @@ import {
   getNewsStats,
   getStock,
   getStockIndex,
-  getStockDailyBasic
+  getStockDailyBasic,
+  getNewsItem
 } from '../../api/stock'
+import {
+  setNews
+} from '../../api/news'
 import NewsList from '../../components/List/NewsList'
 
 const upColor = '#ec0000'
@@ -156,7 +191,9 @@ export default {
       dateRange: [
         dayjs().subtract(1, 'month'),
         dayjs().subtract(0, 'd')
-      ]
+      ],
+      activeRow: {},
+      dialogVisible: false
     }
   },
   computed: {
@@ -318,30 +355,9 @@ export default {
             }
           }
         ]
-        // markPoint: {
-        //   itemStyle: {
-        //     normal: { color: 'rgb(41,60,85)' }
-        //   },
-        //   data: this.newsDaily['1']
-        //     .filter(d => d.value > 0)
-        //     .map(d => {
-        //       const dateList = this.dailyList.map(d => d.trade_date)
-        //       const idx = dateList.indexOf(d.date)
-        //       if (idx === -1) return { coord: [0, 0], value: undefined }
-        //       return {
-        //         coord: [d.date, this.dailyList[idx].close],
-        //         value: d.value
-        //       }
-        //     })
-        // }
       }
       this.chart.setOption(option)
       this.chart.on('click', ev => {
-      })
-
-      // resize
-      this.chart.on('resize', () => {
-        this.renderDaily()
       })
     },
     renderMetricPosChart() {
@@ -487,6 +503,17 @@ export default {
         this.stockBasic = data.items[0]
       })
     },
+    async getNewsItem(id) {
+      const params = {}
+      params.id = id
+      getNewsItem(params).then(data => {
+        this.activeRow = data
+        this.dialogVisible = true
+      })
+    },
+    onClickNewsItem(id) {
+      this.getNewsItem(id)
+    },
     getReasonItemClass(value) {
       if (value === 1) {
         return 'pos'
@@ -563,10 +590,29 @@ export default {
       } else if (value === -1) {
         return '卖出'
       } else {
-        console.log(value)
         return ''
       }
-    }
+    },
+    _select(row) {
+      const data = {}
+      data._id = row._id
+      data.class = row.class
+      setNews(data).then(data => {
+        this.$message.success('A news item has been tagged')
+      })
+    },
+    selectUp(row) {
+      this.$set(row, 'class', 1)
+      this._select(row)
+    },
+    selectFlat(row) {
+      this.$set(row, 'class', 0)
+      this._select(row)
+    },
+    selectDown(row) {
+      this.$set(row, 'class', -1)
+      this._select(row)
+    },
   },
   created() {
     if (this.$route.query.type) this.type = this.$route.query.type
@@ -574,6 +620,8 @@ export default {
     this.getStockIndexList()
     this.getStockList()
     this.getData()
+  },
+  mounted() {
   }
 }
 </script>

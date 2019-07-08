@@ -99,6 +99,7 @@
       :total="stockList.length"
       :page-size.sync="pageSize"
       :current-page.sync="pageNum"
+      layout="total, sizes, prev, pager, next, jumper"
     />
   </div>
 </template>
@@ -123,7 +124,7 @@ export default {
         dayjs().subtract(0, 'd')
       ],
       pageNum: 1,
-      pageSize: 50,
+      pageSize: 10,
       stockList: []
     }
   },
@@ -197,7 +198,7 @@ export default {
   }
 
   .el-table {
-    min-height: 480px;
+    min-height: 360px;
     margin-top: 10px;
     border-radius: 5px;
   }

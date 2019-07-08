@@ -4,6 +4,7 @@
       v-for="n in newsList"
       :key="n._id"
       class="news-item"
+      @click="$emit('click', n._id)"
     >
       <div class="time">
         {{n.ts}}
