@@ -11,7 +11,7 @@ from db import db_manager
 from routes.model import ModelApi
 from routes.news import NewsApi
 from routes.stats import StatsApi
-from routes.stock import StockApi, StockSimpleApi, StockIndexSimpleApi
+from routes.stock import StockApi, StockSimpleApi, StockIndexSimpleApi, StockDailySimpleApi
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 root_path = os.path.abspath(os.path.join(file_dir, '.'))
@@ -57,6 +57,10 @@ api.add_resource(
     StockIndexSimpleApi,
     '/stock_indexes',
     '/stock_indexes/<string:id>'
+)
+api.add_resource(
+    StockDailySimpleApi,
+    '/stock_daily'
 )
 api.add_resource(
     StatsApi,

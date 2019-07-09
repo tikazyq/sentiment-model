@@ -3,7 +3,7 @@ import request from '../utils/request'
 export function getStockDaily(params) {
   if (!params) params = {}
   return request({
-    url: '/stock/daily',
+    url: '/stock_daily',
     method: 'get',
     params
   })

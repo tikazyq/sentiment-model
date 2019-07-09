@@ -25,3 +25,7 @@ class StockSimpleApi(BaseApi):
 
 class StockIndexSimpleApi(BaseApi):
     col_name = 'stock_indexes'
+
+
+class StockDailySimpleApi(BaseApi):
+    col_name = 'stock_daily'

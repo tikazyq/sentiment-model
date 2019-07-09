@@ -110,6 +110,11 @@
               <!--<el-button size="small" type="primary" @click="getData">查询</el-button>-->
             </div>
             <div class="right">
+              <ul class="date-range-list">
+                <li v-for="d in dateRangeList" :key="d">
+                  <a :class="getDateRangeClass(d)" href="javascript:" @click="onDateRangeClick(d)">{{d}}天</a>
+                </li>
+              </ul>
               <el-date-picker
                 type="daterange"
                 v-model="dateRange"
@@ -152,13 +157,14 @@ import {
   setNews
 } from '../../api/news'
 import NewsList from '../../components/List/NewsList'
+import Link from "../../layout/components/Sidebar/Link"
 
 const upColor = '#ec0000'
 const downColor = '#00da3c'
 
 export default {
   name: 'Dashboard',
-  components: { NewsList },
+  components: { Link, NewsList },
   data() {
     return {
       loading: false,
@@ -191,6 +197,14 @@ export default {
       dateRange: [
         dayjs().subtract(1, 'month'),
         dayjs().subtract(0, 'd')
+      ],
+      dateRangeList: [
+        7,
+        14,
+        30,
+        60,
+        90,
+        180
       ],
       activeRow: {},
       dialogVisible: false
@@ -406,11 +420,24 @@ export default {
     },
     getDaily() {
       return new Promise((resolve, reject) => {
+        let func
         const params = {}
-        params.ts_code = this.code
-        params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
-        params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
-        const func = this.type === 'index' ? getIndexDaily : getStockDaily
+        if (this.type === 'index') {
+          func = getIndexDaily
+          params.ts_code = this.code
+          params.start_date = dayjs(this.dateRange[0]).format('YYYYMMDD')
+          params.end_date = dayjs(this.dateRange[1]).format('YYYYMMDD')
+        } else {
+          func = getStockDaily
+          params.filter = {
+            ts_code: this.code,
+            trade_date: {
+              $gte: dayjs(this.dateRange[0]).format('YYYYMMDD'),
+              $lte: dayjs(this.dateRange[1]).format('YYYYMMDD')
+            }
+          }
+          params.page_size = 999999
+        }
         func(params).then(data => {
           this.dailyList = data.items
           this.dailyList.sort((a, b) => a.trade_date < b.trade_date ? -1 : 1)
@@ -515,22 +542,22 @@ export default {
       this.getNewsItem(id)
     },
     getReasonItemClass(value) {
-      if (value === 1) {
+      if (value > 0) {
         return 'pos'
       } else if (value === 0) {
         return 'med'
-      } else if (value === -1) {
+      } else if (value < 0) {
         return 'neg'
       } else {
         return ''
       }
     },
     getReasonItemIconClass(value) {
-      if (value === 1) {
+      if (value > 0) {
         return 'fa-arrow-up'
       } else if (value === 0) {
         return 'fa-minus'
-      } else if (value === -1) {
+      } else if (value < 0) {
         return 'fa-arrow-down'
       } else {
         return ''
@@ -538,31 +565,31 @@ export default {
     },
     getReasonItemText(type) {
       if (type === 'news') {
-        if (this.recomStats.news === 1) {
+        if (this.recomStats.news > 0) {
           return '新闻舆情偏正面'
         } else if (this.recomStats.news === 0) {
           return '新闻舆情偏中性'
-        } else if (this.recomStats.news === -1) {
+        } else if (this.recomStats.news < 0) {
           return '新闻舆情偏负面'
         } else {
           return ''
         }
       } else if (type === 'position') {
-        if (this.recomStats.position === 1) {
+        if (this.recomStats.position > 0) {
           return '股价为低位'
         } else if (this.recomStats.position === 0) {
           return '股价为中位'
-        } else if (this.recomStats.position === -1) {
+        } else if (this.recomStats.position < 0) {
           return '股价为高位'
         } else {
           return ''
         }
       } else if (type === 'trend') {
-        if (this.recomStats.trend === 1) {
+        if (this.recomStats.trend > 0) {
           return '股价趋势为涨'
         } else if (this.recomStats.trend === 0) {
           return '股价趋势为平稳'
-        } else if (this.recomStats.trend === -1) {
+        } else if (this.recomStats.trend < 0) {
           return '股价趋势为跌'
         } else {
           return ''
@@ -572,22 +599,22 @@ export default {
       }
     },
     getRecomClass(value) {
-      if (value === 1) {
+      if (value > 0) {
         return 'buy'
       } else if (value === 0) {
         return 'hold'
-      } else if (value === -1) {
+      } else if (value < 0) {
         return 'sell'
       } else {
         return ''
       }
     },
     getRecomText(value) {
-      if (value === 1) {
+      if (value > 0) {
         return '买入'
       } else if (value === 0) {
         return '持有'
-      } else if (value === -1) {
+      } else if (value < 0) {
         return '卖出'
       } else {
         return ''
@@ -613,6 +640,15 @@ export default {
       this.$set(row, 'class', -1)
       this._select(row)
     },
+    getDateRangeClass(days) {
+      return dayjs(this.dateRange[1]).diff(this.dateRange[0], 'day') === days ? 'active' : ''
+    },
+    onDateRangeClick(days) {
+      this.dateRange = [
+        dayjs().subtract(days, 'd'),
+        dayjs().subtract(0, 'd')
+      ]
+    }
   },
   created() {
     if (this.$route.query.type) this.type = this.$route.query.type
@@ -740,5 +776,33 @@ export default {
 
   .reason-list .reason-item.neg i {
     color: #00da3c;
+  }
+
+  .date-range-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    font-size: 12px;
+  }
+
+  .date-range-list > li > a {
+    color: #555;
+    padding: 0 10px 0 0;
+  }
+
+  .date-range-list > li > a.active,
+  .date-range-list > li > a:hover {
+    color: #409EFF;
+  }
+
+  .control .left {
+    display: flex;
+    align-items: center;
+  }
+
+  .control .right {
+    display: flex;
+    align-items: center;
   }
 </style>

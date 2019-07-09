@@ -120,7 +120,7 @@ export default {
       industry: 'all',
       industryList: [],
       dateRange: [
-        dayjs().subtract(1, 'month'),
+        dayjs().subtract(30, 'd'),
         dayjs().subtract(0, 'd')
       ],
       pageNum: 1,

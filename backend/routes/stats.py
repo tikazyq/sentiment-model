@@ -232,9 +232,9 @@ class StatsApi(BaseApi):
                 stats[cls] = 0
 
         # 获取建议
-        recom_news = self._get_recom_news(stats)  # 舆情建议
+        recom_news = self._get_recom_news(ts_code)  # 舆情建议
         recom_position = self._get_recom_position(ts_code)  # 价位建议
-        recom_trend = self._get_recom_trend(ts_code, start_date, end_date)  # 趋势建议
+        recom_trend = self._get_recom_trend(ts_code)  # 趋势建议
         recom_overall = self._get_recom_overall(
             recom_news,
             recom_position,
@@ -255,27 +255,88 @@ class StatsApi(BaseApi):
         }
 
     @staticmethod
-    def _get_recom_news(stats):
+    def _get_stock_daily(ts_code, start_date, end_date) -> DataFrame:
+        filter_ = {
+            'ts_code': ts_code,
+            'trade_date': {
+                '$gte': start_date,
+                '$lte': end_date
+            }
+        }
+        r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock_daily?filter={json.dumps(filter_)}'
+                         f'&page_size=999999')
+        data = json.loads(r.content)
+        df = DataFrame(data['items'])
+        return df
+
+    @staticmethod
+    def _get_recom_news(ts_code):
+        last_n_days = 14
+        start_date = (datetime.now() - timedelta(last_n_days)).strftime('%Y%m%d')
+        end_date = (datetime.now() - timedelta(0)).strftime('%Y%m%d')
+        start_ts = datetime.strptime(start_date, '%Y%m%d')
+        end_ts = datetime.strptime(end_date, '%Y%m%d')
+
+        query = {
+            'source': 'sina',
+            'stocks': ts_code,
+            'ts': {
+                '$gte': start_ts,
+                '$lt': end_ts
+            },
+            'class_final': {
+                '$in': [-1, 1]
+            }
+        }
+        stats_list = [x for x in db_manager.aggregate('stock_news', [
+            {
+                '$match': query
+            },
+            {
+                '$group': {
+                    '_id': '$class_final',
+                    'count': {'$sum': 1}
+                }
+            }
+        ])]
+        stats = defaultdict(int)
+        for cls in [-1, 1]:
+            arr = [x for x in filter(lambda x: x['_id'] == cls, stats_list)]
+            if len(arr):
+                stats[cls] = arr[0]['count']
+            else:
+                stats[cls] = 0
+
         if sum(stats.values()) == 0:
             return 0
 
         news_threshold = 1 / 3
-        if abs(stats[1] - stats[-1]) / sum(stats.values()) > news_threshold:
+        neg_news_threshold = 1 / 2
+        diff_pct = abs(stats[1] - stats[-1]) / sum(stats.values())
+        if diff_pct > news_threshold:
             if stats[1] > stats[-1]:
                 recom_news = 1
             else:
-                recom_news = -1
+                if diff_pct > neg_news_threshold:
+                    recom_news = -3
+                else:
+                    recom_news = -1
         else:
             recom_news = 0
         return recom_news
 
-    def _get_recom_trend(self, ts_code, start_date, end_date):
+    def _get_recom_trend(self, ts_code):
+        last_n_days = 14
+
+        # 斜率阈值
         trend_threshold = 0.02
-        r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock/daily?ts_code={ts_code}&'
-                         f'start_date={start_date}&end_date={end_date}')
-        data = json.loads(r.content)
-        df = DataFrame(data['items'])
+
+        start_date = (datetime.now() - timedelta(last_n_days)).strftime('%Y%m%d')
+        end_date = (datetime.now() - timedelta(0)).strftime('%Y%m%d')
+
+        df = self._get_stock_daily(ts_code, start_date, end_date)
         df = df.sort_values('trade_date')
+
         X = np.arange(0, len(df)).reshape(-1, 1)
         y = df['close']
         reg = LinearRegression()
@@ -288,17 +349,14 @@ class StatsApi(BaseApi):
         else:
             return 0
 
-    @staticmethod
-    def _get_recom_position(ts_code):
+    def _get_recom_position(self, ts_code):
         last_n_days = 90
-        range_cuts = [1 / 3, 2 / 3]
+        range_cuts = [1 / 4, 3 / 4]
 
         start_date = (datetime.now() - timedelta(last_n_days)).strftime('%Y%m%d')
         end_date = (datetime.now() - timedelta(0)).strftime('%Y%m%d')
-        r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock/daily?ts_code={ts_code}&'
-                         f'start_date={start_date}&end_date={end_date}')
-        data = json.loads(r.content)
-        df = DataFrame(data['items'])
+
+        df = self._get_stock_daily(ts_code, start_date, end_date)
         df = df.sort_values('trade_date')
 
         # 最近一次收盘价
