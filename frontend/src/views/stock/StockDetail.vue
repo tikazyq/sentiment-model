@@ -157,14 +157,13 @@ import {
   setNews
 } from '../../api/news'
 import NewsList from '../../components/List/NewsList'
-import Link from "../../layout/components/Sidebar/Link"
 
 const upColor = '#ec0000'
 const downColor = '#00da3c'
 
 export default {
   name: 'Dashboard',
-  components: { Link, NewsList },
+  components: { NewsList },
   data() {
     return {
       loading: false,
@@ -195,7 +194,7 @@ export default {
         overall: undefined
       },
       dateRange: [
-        dayjs().subtract(1, 'month'),
+        dayjs().subtract(30, 'd'),
         dayjs().subtract(0, 'd')
       ],
       dateRangeList: [
