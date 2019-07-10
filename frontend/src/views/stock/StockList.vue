@@ -41,6 +41,7 @@
       v-loading="loading"
       class="table"
       :data="filteredStockList"
+      :cell-class-name="getCellClassName"
       border
       @row-click="onRowClick"
     >
@@ -74,54 +75,75 @@
         prop="list_date"
         width="100px"
       />
-      <el-table-column
-        label="正面"
-        prop="news_pos"
-        width="60px"
-        align="right"
-      />
-      <el-table-column
-        label="负面"
-        prop="news_neg"
-        width="60px"
-        align="right"
-      />
-      <el-table-column
-        label="中性"
-        prop="news_med"
-        width="60px"
-        align="right"
-      />
-      <el-table-column
-        label="总新闻"
-        prop="news_total"
-        width="60px"
-        align="right"
-      />
-      <el-table-column
-        label="建议-新闻"
-        prop="recom_news"
-        width="60px"
-        align="right"
-      />
-      <el-table-column
-        label="建议-价位"
-        prop="recom_position"
-        width="60px"
-        align="right"
-      />
-      <el-table-column
-        label="建议-趋势"
-        prop="recom_trend"
-        width="60px"
-        align="right"
-      />
-      <el-table-column
-        label="建议-综合"
-        prop="recom_overall"
-        width="60px"
-        align="right"
-      />
+      <el-table-column label="新闻" align="center">
+        <el-table-column
+          label="正面"
+          prop="news_pos"
+          width="60px"
+          align="right"
+        />
+        <el-table-column
+          label="负面"
+          prop="news_neg"
+          width="60px"
+          align="right"
+        />
+        <el-table-column
+          label="中性"
+          prop="news_med"
+          width="60px"
+          align="right"
+        />
+        <el-table-column
+          label="总新闻"
+          prop="news_total"
+          width="60px"
+          align="right"
+        />
+      </el-table-column>
+      <el-table-column label="建议" align="center">
+        <el-table-column
+          label="新闻"
+          prop="recom_news"
+          width="60px"
+          align="center"
+        >
+          <template slot-scope="scope">
+            {{ getRecomCellText(scope.row, scope.column) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="价位"
+          prop="recom_position"
+          width="60px"
+          align="center"
+        >
+          <template slot-scope="scope">
+            {{ getRecomCellText(scope.row, scope.column) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="趋势"
+          prop="recom_trend"
+          width="60px"
+          align="center"
+        >
+          <template slot-scope="scope">
+            {{ getRecomCellText(scope.row, scope.column) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="综合"
+          class-name="bold"
+          prop="recom_overall"
+          width="60px"
+          align="center"
+        >
+          <template slot-scope="scope">
+            {{ getRecomCellText(scope.row, scope.column) }}
+          </template>
+        </el-table-column>
+      </el-table-column>
     </el-table>
     <el-pagination
       :total="stockList.length"
@@ -172,6 +194,9 @@ export default {
     },
     industry() {
       this.getStockListStats()
+    },
+    dateRange() {
+      this.getStockListStats()
     }
   },
   methods: {
@@ -196,6 +221,31 @@ export default {
     },
     onRowClick(row, column, event) {
       this.$router.push('/stock/detail?code=' + row.ts_code)
+    },
+    getCellClassName({ row, column }) {
+      if (column.property.match(/^recom_/)) {
+        if (row[column.property] == null) {
+          return ''
+        } else if (row[column.property] > 0) {
+          return 'up'
+        } else if (row[column.property] === 0) {
+          return 'no-change'
+        } else {
+          return 'down'
+        }
+      }
+      return ''
+    },
+    getRecomCellText(row, column) {
+      if (row[column.property] == null) {
+        return '-'
+      } else if (row[column.property] > 0) {
+        return '买入'
+      } else if (row[column.property] === 0) {
+        return '持有'
+      } else {
+        return '卖出'
+      }
     }
   },
   created() {
@@ -235,9 +285,28 @@ export default {
     font-size: 12px;
   }
 
+  .el-table >>> td.up {
+    background: rgba(245, 108, 108, .1);
+    color: #f56c6c;
+  }
+
+  .el-table >>> td.no-change {
+    background: rgba(230, 162, 60, .1);
+    color: #e6a23c;
+  }
+
+  .el-table >>> td.down {
+    background: rgba(103, 194, 58, .1);
+    color: #67c23a;
+  }
+
   .el-table >>> th,
   .el-table >>> td {
     padding: 5px 0;
+  }
+
+  .el-table >>> td.bold {
+    font-weight: 600;
   }
 
   .el-table >>> tbody tr {

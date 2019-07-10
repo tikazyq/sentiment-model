@@ -73,15 +73,15 @@
             <ul class="reason-list">
               <li class="reason-item" :class="getReasonItemClass(recomStats.news)">
                 <i class="fa" :class="getReasonItemIconClass(recomStats.news)"></i>
-                {{getReasonItemText('news')}}
+                {{ getReasonItemText('news') }}
               </li>
               <li class="reason-item" :class="getReasonItemClass(recomStats.position)">
                 <i class="fa" :class="getReasonItemIconClass(recomStats.position)"></i>
-                {{getReasonItemText('position')}}
+                {{ getReasonItemText('position') }}
               </li>
               <li class="reason-item" :class="getReasonItemClass(recomStats.trend)">
                 <i class="fa" :class="getReasonItemIconClass(recomStats.trend)"></i>
-                {{getReasonItemText('trend')}}
+                {{ getReasonItemText('trend') }}
               </li>
             </ul>
           </el-col>
@@ -111,7 +111,7 @@
             </div>
             <div class="right">
               <ul class="date-range-list">
-                <li v-for="d in dateRangeList" :key="d">
+                <li v-for="(d, index) in dateRangeList" :key="index">
                   <a :class="getDateRangeClass(d)" href="javascript:" @click="onDateRangeClick(d)">{{d.label}}</a>
                 </li>
               </ul>
