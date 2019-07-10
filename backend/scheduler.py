@@ -21,11 +21,13 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
 scheduler = BackgroundScheduler()
 
 
+# @scheduler.scheduled_job('interval', seconds=10)
 @scheduler.scheduled_job('interval', minutes=10)
 def train_model():
     logging.info('training model...')
     r = requests.get(f'http://localhost:{config.FLASK_PORT}/model/train')
     logging.info(f'response: {r.content.decode("utf-8")}')
+    logging.info('training model complete')
 
 
 @scheduler.scheduled_job('interval', minutes=1)
