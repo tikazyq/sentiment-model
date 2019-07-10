@@ -6,11 +6,14 @@ import requests
 from pandas import DataFrame
 from sklearn.linear_model import LinearRegression
 import numpy as np
+from pytz import timezone
 
 import config
 from db import db_manager
 from routes.base import BaseApi
 from utils import jsonify
+
+tz = timezone('Asia/Shanghai')
 
 
 class StatsApi(BaseApi):
@@ -33,8 +36,8 @@ class StatsApi(BaseApi):
         market = args.get('market')
         industry = args.get('industry')
         exchange = args.get('exchange') or 'SH'
-        start_ts = datetime.strptime(start_date, '%Y%m%d')
-        end_ts = datetime.strptime(end_date, '%Y%m%d')
+        start_ts = tz.localize(datetime.strptime(start_date, '%Y%m%d'))
+        end_ts = tz.localize(datetime.strptime(end_date, '%Y%m%d')) + timedelta(days=1)
         query = {}
         if market is not None:
             query['market'] = market
@@ -95,6 +98,19 @@ class StatsApi(BaseApi):
             s['news_neg'] = n.get('neg') or 0
             stock_list[i] = s
 
+        # 操作建议数据
+        recom_list = [x for x in db_manager.list('stock_stats', {}, limit=999999)]
+        recom_dict = {x['_id']: x for x in recom_list}
+
+        # 将操作建议数据与股票数据join起来
+        for i in range(len(stock_list)):
+            s = stock_list[i]
+            ts_code = s['ts_code']
+            s['recom_news'] = recom_dict[ts_code]['news'] if recom_dict.get(ts_code) is not None else None
+            s['recom_position'] = recom_dict[ts_code]['position'] if recom_dict.get(ts_code) is not None else None
+            s['recom_trend'] = recom_dict[ts_code]['trend'] if recom_dict.get(ts_code) is not None else None
+            s['recom_overall'] = recom_dict[ts_code]['overall'] if recom_dict.get(ts_code) is not None else None
+
         return {
             'status': 'ok',
             'stocks': stock_list
@@ -123,8 +139,8 @@ class StatsApi(BaseApi):
         start_date = args.get('start_date')
         end_date = args.get('end_date')
         ts_code = args.get('ts_code')
-        start_ts = datetime.strptime(start_date, '%Y%m%d')
-        end_ts = datetime.strptime(end_date, '%Y%m%d')
+        start_ts = tz.localize(datetime.strptime(start_date, '%Y%m%d'))
+        end_ts = tz.localize(datetime.strptime(end_date, '%Y%m%d')) + timedelta(days=1)
         query = {
             'source': 'sina',
             'ts': {
@@ -162,7 +178,8 @@ class StatsApi(BaseApi):
                     'date': {
                         '$dateToString': {
                             'format': '%Y%m%d',
-                            'date': '$ts'
+                            'date': '$ts',
+                            'timezone': 'Asia/Shanghai',
                         }
                     }
                 }
@@ -274,8 +291,8 @@ class StatsApi(BaseApi):
         last_n_days = 14
         start_date = (datetime.now() - timedelta(last_n_days)).strftime('%Y%m%d')
         end_date = (datetime.now() - timedelta(0)).strftime('%Y%m%d')
-        start_ts = datetime.strptime(start_date, '%Y%m%d')
-        end_ts = datetime.strptime(end_date, '%Y%m%d')
+        start_ts = tz.localize(datetime.strptime(start_date, '%Y%m%d'))
+        end_ts = tz.localize(datetime.strptime(end_date, '%Y%m%d')) + timedelta(days=1)
 
         query = {
             'source': 'sina',

@@ -112,7 +112,7 @@
             <div class="right">
               <ul class="date-range-list">
                 <li v-for="d in dateRangeList" :key="d">
-                  <a :class="getDateRangeClass(d)" href="javascript:" @click="onDateRangeClick(d)">{{d}}天</a>
+                  <a :class="getDateRangeClass(d)" href="javascript:" @click="onDateRangeClick(d)">{{d.label}}</a>
                 </li>
               </ul>
               <el-date-picker
@@ -198,12 +198,12 @@ export default {
         dayjs().subtract(0, 'd')
       ],
       dateRangeList: [
-        7,
-        14,
-        30,
-        60,
-        90,
-        180
+        { value: 7, unit: 'day', label: '7天' },
+        { value: 14, unit: 'day', label: '14天' },
+        { value: 1, unit: 'month', label: '1月' },
+        { value: 3, unit: 'month', label: '3月' },
+        { value: 6, unit: 'month', label: '半年' },
+        { value: 1, unit: 'year', label: '1年' }
       ],
       activeRow: {},
       dialogVisible: false
@@ -639,13 +639,13 @@ export default {
       this.$set(row, 'class', -1)
       this._select(row)
     },
-    getDateRangeClass(days) {
-      return dayjs(this.dateRange[1]).diff(this.dateRange[0], 'day') === days ? 'active' : ''
+    getDateRangeClass(d) {
+      return dayjs(this.dateRange[1]).diff(this.dateRange[0], d.unit) === d.value ? 'active' : ''
     },
-    onDateRangeClick(days) {
+    onDateRangeClick(d) {
       this.dateRange = [
-        dayjs().subtract(days, 'd'),
-        dayjs().subtract(0, 'd')
+        dayjs().subtract(d.value, d.unit),
+        dayjs().subtract(0, d.unit)
       ]
     }
   },

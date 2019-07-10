@@ -77,22 +77,50 @@
       <el-table-column
         label="正面"
         prop="news_pos"
-        width="100px"
+        width="60px"
+        align="right"
       />
       <el-table-column
         label="负面"
         prop="news_neg"
-        width="100px"
+        width="60px"
+        align="right"
       />
       <el-table-column
         label="中性"
         prop="news_med"
-        width="100px"
+        width="60px"
+        align="right"
       />
       <el-table-column
         label="总新闻"
         prop="news_total"
-        width="100px"
+        width="60px"
+        align="right"
+      />
+      <el-table-column
+        label="建议-新闻"
+        prop="recom_news"
+        width="60px"
+        align="right"
+      />
+      <el-table-column
+        label="建议-价位"
+        prop="recom_position"
+        width="60px"
+        align="right"
+      />
+      <el-table-column
+        label="建议-趋势"
+        prop="recom_trend"
+        width="60px"
+        align="right"
+      />
+      <el-table-column
+        label="建议-综合"
+        prop="recom_overall"
+        width="60px"
+        align="right"
       />
     </el-table>
     <el-pagination

@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timedelta
 from random import randint
 from time import sleep
+import logging
 
 import joblib
 import requests
@@ -14,19 +15,22 @@ from pymongo import DESCENDING, ASCENDING
 import config
 from db import db_manager
 
+logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
+                    level=logging.DEBUG)
+
 scheduler = BackgroundScheduler()
 
 
 @scheduler.scheduled_job('interval', minutes=10)
 def train_model():
-    print('training model...')
+    logging.info('training model...')
     r = requests.get(f'http://localhost:{config.FLASK_PORT}/model/train')
-    print(f'response: {r.content.decode("utf-8")}')
+    logging.info(f'response: {r.content.decode("utf-8")}')
 
 
 @scheduler.scheduled_job('interval', minutes=1)
 def predict_news():
-    print('predicting news...')
+    logging.info('predicting news...')
     filename = os.path.join(config.MODEL_DIR, f'{config.MODEL_NAME}.pkl')
     clf = joblib.load(filename)
     filename_vec = os.path.join(config.MODEL_DIR, f'vec.pkl')
@@ -45,7 +49,7 @@ def predict_news():
     news_list = []
     for i, d in enumerate(col.find(query).limit(batch_size)):
         if (i % 100 == 0 and i > 0) or i - 1 == batch_size:
-            print(f'{i}/{batch_size}')
+            logging.info(f'{i}/{batch_size}')
         text = d.get('text')
         txt.append(text)
         news_list.append(d)
@@ -58,18 +62,18 @@ def predict_news():
     i = 0
     for d, cls in zip(news_list, cls_list):
         if (i % 100 == 0 and i > 0) or i - 1 == batch_size:
-            print(f'{i}/{1000}')
+            logging.info(f'{i}/{1000}')
         db_manager.update_one('stock_news', d['_id'], {
             'class_pred': cls
             # 'proba_list': p
         })
         i += 1
-    print('predicting news complete')
+    logging.info('predicting news complete')
 
 
 @scheduler.scheduled_job('interval', hours=1)
 def update_stock_list():
-    print('updating stock list...')
+    logging.info('updating stock list...')
     r = requests.get(f'http://localhost:{config.FLASK_PORT}/stock/stock_basic')
     data = json.loads(r.content)
     for item in data['items']:
@@ -95,7 +99,7 @@ def update_stock_daily():
                 items.append(d)
             db_manager.insert_many('stock_daily', items)
 
-    print('updating stock daily...')
+    logging.info('updating stock daily')
 
     # 创建索引
     db_manager.create_index('stock_daily', keys=[('trade_date', DESCENDING)])
@@ -113,11 +117,12 @@ def update_stock_daily():
         tasks.append(_update(ts_code, semaphore))  # 开始更新数据
     loop.run_until_complete(asyncio.wait(tasks))
     loop.close()
+    logging.info('updating stock complete')
 
 
 @scheduler.scheduled_job('interval', hours=1)
 def update_stock_index_list():
-    print('updating stock index list...')
+    logging.info('updating stock index list...')
     market_list = [
         'MSCI',
         'CSI',
@@ -133,11 +138,12 @@ def update_stock_index_list():
         for item in data['items']:
             item['_id'] = item['ts_code']
             db_manager.save(col_name='stock_indexes', item=item)
+    logging.info('updating stock index list complete')
 
 
 @scheduler.scheduled_job('interval', minutes=5)
 def update_news_stocks():
-    print('updating news stocks...')
+    logging.info('updating news stocks...')
     # 只更新雪球网
     stock_list = db_manager.list('stocks', {}, limit=999999)
     for item in db_manager.list('stock_news', {'stocks': {'$exists': False}}, limit=999999):
@@ -148,11 +154,12 @@ def update_news_stocks():
         db_manager.update_one(col_name='stock_news', id=item['_id'], values={
             'stocks': stocks
         })
+    logging.info('updating news stocks complete')
 
 
 @scheduler.scheduled_job('interval', minutes=10)
 def update_news_class():
-    print('updating news class...')
+    logging.info('updating news class...')
     col = db_manager.db['stock_news']
     cls_list = [-1, 0, 1]
     for cls in cls_list:
@@ -165,20 +172,21 @@ def update_news_class():
             {'$set': {'class_final': cls}}
         )
 
-    print('updating news class complete')
+    logging.info('updating news class complete')
 
 
 @scheduler.scheduled_job('interval', days=1)
+# @scheduler.scheduled_job('interval', seconds=10)
 def update_stock_stats():
     async def _update(url, ts_code):
         r = await asyncio.get_event_loop().run_in_executor(None, functools.partial(requests.get, url))
         raw_data = json.loads(r.content)
         d = raw_data['recom']
         d['_id'] = ts_code
-        sleep(randint(1, 5))
+        # sleep(randint(1, 5))
         db_manager.save('stock_stats', d)
 
-    print('updating stock stats...')
+    logging.info('updating stock stats...')
 
     last_n_days = 30
     start_date = (datetime.now() - timedelta(last_n_days)).strftime('%Y%m%d')
